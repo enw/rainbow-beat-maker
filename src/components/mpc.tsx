@@ -446,6 +446,28 @@ function Timeline({
   );
 }
 
+type LayoutState = {
+  configWidth: number;
+  timelineHeight: number;
+  padHeight: number;
+};
+
+const DEFAULT_LAYOUT: LayoutState = {
+  configWidth: 250,
+  timelineHeight: 300,
+  padHeight: 300,
+};
+
+function loadLayout(): LayoutState {
+  if (typeof window === 'undefined') return DEFAULT_LAYOUT;
+  const saved = localStorage.getItem('beatmaker-layout');
+  return saved ? JSON.parse(saved) : DEFAULT_LAYOUT;
+}
+
+function saveLayout(layout: LayoutState) {
+  localStorage.setItem('beatmaker-layout', JSON.stringify(layout));
+}
+
 export default function MPC() {
   const [bpm, setBpm] = useState(120);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -460,8 +482,9 @@ export default function MPC() {
   const [failedSamples, setFailedSamples] = useState<Set<number>>(new Set());
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [timelineHeight, setTimelineHeight] = useState(200);
-  const [padGridHeight, setPadGridHeight] = useState(400);
+  const [layout, setLayout] = useState<LayoutState>(loadLayout);
+  const [isResizingConfig, setIsResizingConfig] = useState(false);
+  const [isResizingTimeline, setIsResizingTimeline] = useState(false);
 
   // Set all boolean config options to true by default
   const [isMetronomeOn, setIsMetronomeOn] = useState(true);
@@ -590,14 +613,10 @@ export default function MPC() {
         }
 
         // Quantize timestamp
-        const quantizedTimestamp =
-          Math.round(timestamp / noteDuration) * noteDuration;
+        const quantizedTimestamp = Math.round(timestamp / noteDuration) * noteDuration;
 
         setCurrentPattern((prev) => ({
-          hits: [
-            ...(prev?.hits || []),
-            { padId, timestamp: quantizedTimestamp },
-          ],
+          hits: [...(prev?.hits || []), { padId, timestamp: quantizedTimestamp }],
           duration: prev?.duration || 0,
           loop: prev?.loop,
         }));
@@ -609,7 +628,7 @@ export default function MPC() {
           newSet.delete(padId);
           return newSet;
         });
-      }, 100);
+      }, 100); // Added missing timeout duration
     },
     [playSound, isRecording, recordingStartTime, bpm, quantization]
   );
@@ -790,101 +809,166 @@ export default function MPC() {
     }
   }, [isPlaying, currentPattern, isLooping]);
 
-  // Update both heights when resizing
-  const handleTimelineResize = useCallback(
-    (newTimelineHeight: number) => {
-      const totalHeight = timelineHeight + padGridHeight;
-      setTimelineHeight(newTimelineHeight);
-      setPadGridHeight(totalHeight - newTimelineHeight);
-    },
-    [timelineHeight, padGridHeight]
-  );
+  // Save layout changes
+  useEffect(() => {
+    saveLayout(layout);
+  }, [layout]);
+
+  const handleConfigResize = useCallback((e: MouseEvent) => {
+    if (isResizingConfig) {
+      const newWidth = Math.max(200, Math.min(400, e.clientX));
+      setLayout(prev => ({ ...prev, configWidth: newWidth }));
+    }
+  }, [isResizingConfig]);
+
+  const handleTimelineResize = useCallback((e: MouseEvent) => {
+    if (isResizingTimeline) {
+      const newHeight = Math.max(100, Math.min(600, e.clientY));
+      setLayout(prev => ({ ...prev, timelineHeight: newHeight }));
+    }
+  }, [isResizingTimeline]);
+
+  useEffect(() => {
+    if (isResizingConfig || isResizingTimeline) {
+      window.addEventListener('mousemove', isResizingConfig ? handleConfigResize : handleTimelineResize);
+      window.addEventListener('mouseup', () => {
+        setIsResizingConfig(false);
+        setIsResizingTimeline(false);
+      });
+      document.body.style.cursor = isResizingConfig ? 'ew-resize' : 'ns-resize';
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleConfigResize);
+      window.removeEventListener('mousemove', handleTimelineResize);
+      document.body.style.cursor = '';
+    };
+  }, [isResizingConfig, isResizingTimeline, handleConfigResize, handleTimelineResize]);
 
   return (
-    <div className="min-h-screen bg-gray-900 p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white">
-              Rainbow Beat Maker
-            </h1>
-            <p className="text-gray-400 text-sm mt-1">
-              Press &apos;K&apos; to {showShortcuts ? "hide" : "show"} keyboard
-              shortcuts
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setIsConfigOpen(!isConfigOpen)}
-              className="px-4 py-2 rounded bg-gray-700 hover:bg-gray-600 text-white"
-            >
-              ⚙️ Config
-            </button>
-            <div className="flex gap-2">
-              {!isRecording && !isPlaying && (
-                <>
-                  <button
-                    onClick={startRecording}
-                    className="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white"
-                  >
-                    {currentPattern ? "Overdub" : "Record"}
-                  </button>
-                  {currentPattern && (
-                    <>
-                      <button
-                        onClick={playPattern}
-                        className="px-4 py-2 rounded bg-green-500 hover:bg-green-600 text-white"
-                      >
-                        Play
-                      </button>
-                      <button
-                        onClick={clearPattern}
-                        className="px-4 py-2 rounded bg-gray-500 hover:bg-gray-600 text-white"
-                      >
-                        Clear
-                      </button>
-                    </>
-                  )}
-                </>
-              )}
-              {isRecording && (
-                <button
-                  onClick={stopRecording}
-                  className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-600 text-white"
-                >
-                  Stop Recording
-                </button>
-              )}
-              {isPlaying && !isRecording && (
-                <button
-                  onClick={stopPattern}
-                  className="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white"
-                >
-                  Stop
-                </button>
-              )}
+    <div className="h-screen bg-gray-900 flex overflow-hidden">
+      {/* Config Panel */}
+      <div 
+        className="bg-gray-800 h-full flex-shrink-0 flex flex-col"
+        style={{ width: `${layout.configWidth}px` }}
+      >
+        <div className="p-4 flex-grow overflow-y-auto">
+          <h1 className="text-2xl font-bold text-white mb-6">Rainbow Beat Maker</h1>
+          <div className="space-y-4">
+            <div className="text-white">
+              <label className="block mb-2">BPM</label>
+              <input
+                type="number"
+                value={bpm}
+                onChange={(e) => setBpm(Math.max(40, Math.min(240, Number(e.target.value))))}
+                className="w-full px-2 py-1 rounded bg-gray-700"
+              />
+            </div>
+            <label className="flex items-center text-white">
+              <input
+                type="checkbox"
+                checked={isMetronomeOn}
+                onChange={(e) => setIsMetronomeOn(e.target.checked)}
+                className="mr-2"
+              />
+              Metronome
+            </label>
+            <label className="flex items-center text-white">
+              <input
+                type="checkbox"
+                checked={useCountIn}
+                onChange={(e) => setUseCountIn(e.target.checked)}
+                className="mr-2"
+              />
+              Count-in
+            </label>
+            <label className="flex items-center text-white">
+              <input
+                type="checkbox"
+                checked={isLooping}
+                onChange={(e) => setIsLooping(e.target.checked)}
+                className="mr-2"
+              />
+              Loop
+            </label>
+            <div className="text-white">
+              <label className="block mb-2">Measures</label>
+              <input
+                type="number"
+                value={measures}
+                onChange={(e) => setMeasures(Math.max(1, Math.min(8, Number(e.target.value))))}
+                className="w-full px-2 py-1 rounded bg-gray-700"
+              />
             </div>
           </div>
         </div>
-
-        <ConfigPanel
-          isOpen={isConfigOpen}
-          bpm={bpm}
-          setBpm={setBpm}
-          isMetronomeOn={isMetronomeOn}
-          setIsMetronomeOn={setIsMetronomeOn}
-          useCountIn={useCountIn}
-          setUseCountIn={setUseCountIn}
-          isLooping={isLooping}
-          setIsLooping={setIsLooping}
-          measures={measures}
-          setMeasures={setMeasures}
-          quantization={quantization}
-          setQuantization={setQuantization}
+        {/* Config resize handle */}
+        <div
+          className="absolute right-0 top-0 w-1 h-full bg-gray-600 hover:bg-gray-500 cursor-ew-resize"
+          onMouseDown={() => setIsResizingConfig(true)}
         />
+      </div>
 
-        <div className="flex flex-col">
-          {/* Timeline */}
+      <div className="flex-grow flex flex-col h-full overflow-hidden">
+        {/* Header with transport controls */}
+        <div className="bg-gray-800 p-4 border-b border-gray-700 flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-white">Rainbow Beat Maker</h1>
+          
+          <div className="flex items-center gap-4">
+            {!isRecording && !isPlaying && (
+              <>
+                <button
+                  onClick={startRecording}
+                  className="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white flex items-center gap-2"
+                >
+                  <span className="text-xl">⏺</span>
+                  {currentPattern ? "Overdub" : "Record"}
+                </button>
+                {currentPattern && (
+                  <button
+                    onClick={playPattern}
+                    className="px-4 py-2 rounded bg-green-500 hover:bg-green-600 text-white flex items-center gap-2"
+                  >
+                    <span className="text-xl">▶</span>
+                    Play
+                  </button>
+                )}
+              </>
+            )}
+            {isRecording && (
+              <button
+                onClick={stopRecording}
+                className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-600 text-white flex items-center gap-2"
+              >
+                <span className="text-xl">⏹</span>
+                Stop Recording
+              </button>
+            )}
+            {isPlaying && !isRecording && (
+              <button
+                onClick={stopPattern}
+                className="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white flex items-center gap-2"
+              >
+                <span className="text-xl">⏹</span>
+                Stop
+              </button>
+            )}
+            {currentPattern && !isPlaying && !isRecording && (
+              <button
+                onClick={clearPattern}
+                className="px-4 py-2 rounded bg-gray-500 hover:bg-gray-600 text-white"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Timeline */}
+        <div 
+          className="bg-gray-800 flex-shrink-0"
+          style={{ height: `${layout.timelineHeight}px` }}
+        >
           <Timeline
             pattern={currentPattern}
             isPlaying={isPlaying}
@@ -892,34 +976,40 @@ export default function MPC() {
             duration={currentPattern?.duration || 0}
             measures={measures}
             bpm={bpm}
-            height={timelineHeight}
-            onHeightChange={handleTimelineResize}
+            height={layout.timelineHeight - 40}
+            onHeightChange={height => setLayout(prev => ({ ...prev, timelineHeight: height }))}
           />
-
-          {/* Pad Grid with dynamic height */}
+          {/* Timeline resize handle */}
           <div
-            className="grid grid-cols-4 gap-4"
-            style={{ height: `${padGridHeight}px` }}
-          >
-            {initialPads.map((pad) => (
-              <button
-                key={pad.id}
-                onMouseDown={() => handlePadPress(pad.id)}
-                className={`${
-                  pad.color
-                } p-6 rounded-lg aspect-square flex flex-col items-center justify-center text-white transition-transform ${
-                  activePads.has(pad.id) ? "scale-90" : "scale-100"
-                }`}
-              >
-                <span className="text-lg font-bold">
-                  {pad.name}
-                  {failedSamples.has(pad.id) && " ★"}
-                </span>
-                {showShortcuts && (
-                  <span className="text-sm opacity-80 mt-1">({pad.key})</span>
-                )}
-              </button>
-            ))}
+            className="h-1 w-full bg-gray-600 hover:bg-gray-500 cursor-ns-resize"
+            onMouseDown={() => setIsResizingTimeline(true)}
+          />
+        </div>
+
+        {/* Pads */}
+        <div className="flex-grow bg-gray-900 overflow-auto">
+          <div className="p-4">
+            <div className="grid grid-cols-4 gap-4 auto-rows-fr">
+              {initialPads.map((pad) => (
+                <button
+                  key={pad.id}
+                  onMouseDown={() => handlePadPress(pad.id)}
+                  className={`${
+                    pad.color
+                  } rounded-lg aspect-square flex flex-col items-center justify-center text-white transition-transform ${
+                    activePads.has(pad.id) ? "scale-90" : "scale-100"
+                  }`}
+                >
+                  <span className="text-lg font-bold">
+                    {pad.name}
+                    {failedSamples.has(pad.id) && " ★"}
+                  </span>
+                  {showShortcuts && (
+                    <span className="text-sm opacity-80 mt-1">({pad.key})</span>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
