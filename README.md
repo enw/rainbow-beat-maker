@@ -9,8 +9,11 @@ A web-based drum machine/beat maker built with Next.js and Web Audio API. Featur
 - Visual feedback when pads are triggered
 - Rainbow color scheme for easy pad identification
 - Toggle keyboard shortcut display with 'K' key
-- BPM control (coming soon)
-- Play/Stop functionality (coming soon)
+- BPM control
+- Play/Stop functionality
+- New layout with timeline
+- Recording functionality
+- Pattern sequencer
 
 ## Keyboard Layout
 
@@ -25,6 +28,7 @@ Z X C V
 
 1. Clone the repository
 2. Install dependencies:
+
 ```bash
 npm install
 # or
@@ -33,6 +37,7 @@ yarn install
 
 3. Add drum samples:
    Create a `public/samples` directory and add the following `.wav` files:
+
    - kick.wav
    - snare.wav
    - clap.wav
@@ -53,6 +58,7 @@ yarn install
    (Note: Sample population script coming soon!)
 
 4. Run the development server:
+
 ```bash
 npm run dev
 # or
@@ -71,9 +77,7 @@ yarn dev
 
 ## Coming Soon
 
-- Sample population script
-- Recording functionality
-- Pattern sequencer
+- Script to populate samples
 - Sound customization
 - Save/load patterns
 - Share beats with others
