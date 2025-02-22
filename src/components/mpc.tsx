@@ -21,14 +21,14 @@ const initialPads: Pad[] = [
     id: 2,
     name: "Snare",
     key: "2",
-    color: "bg-blue-500 hover:bg-blue-600",
+    color: "bg-orange-500 hover:bg-orange-600",
     soundUrl: "/samples/snare.wav",
   },
   {
     id: 3,
     name: "Clap",
     key: "3",
-    color: "bg-green-500 hover:bg-green-600",
+    color: "bg-amber-500 hover:bg-amber-600",
     soundUrl: "/samples/clap.wav",
   },
   {
@@ -42,84 +42,84 @@ const initialPads: Pad[] = [
     id: 5,
     name: "Tom 1",
     key: "Q",
-    color: "bg-purple-500 hover:bg-purple-600",
+    color: "bg-lime-500 hover:bg-lime-600",
     soundUrl: "/samples/tom1.wav",
   },
   {
     id: 6,
     name: "Tom 2",
     key: "W",
-    color: "bg-pink-500 hover:bg-pink-600",
+    color: "bg-green-500 hover:bg-green-600",
     soundUrl: "/samples/tom2.wav",
   },
   {
     id: 7,
     name: "Cymbal",
     key: "E",
-    color: "bg-indigo-500 hover:bg-indigo-600",
+    color: "bg-emerald-500 hover:bg-emerald-600",
     soundUrl: "/samples/cymbal.wav",
   },
   {
     id: 8,
     name: "Perc",
     key: "R",
-    color: "bg-orange-500 hover:bg-orange-600",
+    color: "bg-teal-500 hover:bg-teal-600",
     soundUrl: "/samples/perc.wav",
   },
   {
     id: 9,
     name: "Kick 2",
     key: "A",
-    color: "bg-red-700 hover:bg-red-800",
+    color: "bg-cyan-500 hover:bg-cyan-600",
     soundUrl: "/samples/kick2.wav",
   },
   {
     id: 10,
     name: "Snare 2",
     key: "S",
-    color: "bg-blue-700 hover:bg-blue-800",
+    color: "bg-sky-500 hover:bg-sky-600",
     soundUrl: "/samples/snare2.wav",
   },
   {
     id: 11,
     name: "Clap 2",
     key: "D",
-    color: "bg-green-700 hover:bg-green-800",
+    color: "bg-blue-500 hover:bg-blue-600",
     soundUrl: "/samples/clap2.wav",
   },
   {
     id: 12,
     name: "HiHat 2",
     key: "F",
-    color: "bg-yellow-700 hover:bg-yellow-800",
+    color: "bg-indigo-500 hover:bg-indigo-600",
     soundUrl: "/samples/hihat2.wav",
   },
   {
     id: 13,
     name: "Tom 3",
     key: "Z",
-    color: "bg-purple-700 hover:bg-purple-800",
+    color: "bg-violet-500 hover:bg-violet-600",
     soundUrl: "/samples/tom3.wav",
   },
   {
     id: 14,
     name: "Tom 4",
     key: "X",
-    color: "bg-pink-700 hover:bg-pink-800",
+    color: "bg-purple-500 hover:bg-purple-600",
     soundUrl: "/samples/tom4.wav",
   },
   {
     id: 15,
     name: "Cymbal 2",
     key: "C",
-    color: "bg-indigo-700 hover:bg-indigo-800",
+    color: "bg-fuchsia-500 hover:bg-fuchsia-600",
     soundUrl: "/samples/cymbal2.wav",
   },
   {
     id: 16,
     name: "Perc 2",
     key: "V",
-    color: "bg-orange-700 hover:bg-orange-800",
+    color: "bg-pink-500 hover:bg-pink-600",
     soundUrl: "/samples/perc2.wav",
   },
 ];
@@ -155,7 +155,7 @@ export default function MPC() {
           setSamples((prev) => new Map(prev).set(pad.id, audioBuffer));
         } catch (error) {
           console.error(`Error loading sample for pad ${pad.id}:`, error);
-          setFailedSamples(prev => new Set(prev).add(pad.id));
+          setFailedSamples((prev) => new Set(prev).add(pad.id));
         }
       };
 
@@ -201,11 +201,11 @@ export default function MPC() {
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() === 'k') {
-        setShowShortcuts(prev => !prev);
+      if (event.key.toLowerCase() === "k") {
+        setShowShortcuts((prev) => !prev);
         return;
       }
-      
+
       const padId = keyToPadMap.get(event.key.toLowerCase());
       if (padId) {
         setActivePads((prev) => new Set([...prev, padId]));
@@ -240,9 +240,9 @@ export default function MPC() {
       <div className="max-w-4xl mx-auto">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white">MPC Beats</h1>
+            <h1 className="text-3xl font-bold text-white">Elliot & Noelle&apos;s Beat Maker</h1>
             <p className="text-gray-400 text-sm mt-1">
-              Press 'K' to {showShortcuts ? 'hide' : 'show'} keyboard shortcuts
+              Press &apos;K&apos; to {showShortcuts ? "hide" : "show"} keyboard shortcuts
             </p>
           </div>
           <div className="flex items-center gap-4">
