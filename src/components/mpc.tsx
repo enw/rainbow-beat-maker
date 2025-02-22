@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 
 type Pad = {
   id: number;
@@ -128,6 +128,89 @@ const keyToPadMap = new Map(
   initialPads.map((pad) => [pad.key.toLowerCase(), pad.id])
 );
 
+type PadHit = {
+  padId: number;
+  timestamp: number;
+};
+
+type Pattern = {
+  hits: PadHit[];
+  duration: number;
+  loop?: boolean;
+};
+
+type ConfigPanelProps = {
+  isOpen: boolean;
+  bpm: number;
+  setBpm: (bpm: number) => void;
+  isMetronomeOn: boolean;
+  setIsMetronomeOn: (on: boolean) => void;
+  useCountIn: boolean;
+  setUseCountIn: (on: boolean) => void;
+  isLooping: boolean;
+  setIsLooping: (on: boolean) => void;
+};
+
+function ConfigPanel({
+  isOpen,
+  bpm,
+  setBpm,
+  isMetronomeOn,
+  setIsMetronomeOn,
+  useCountIn,
+  setUseCountIn,
+  isLooping,
+  setIsLooping,
+}: ConfigPanelProps) {
+  return (
+    <div 
+      className={`fixed right-0 top-0 h-full w-64 bg-gray-800 p-6 transform transition-transform duration-300 z-50 ${
+        isOpen ? 'translate-x-0' : 'translate-x-full'
+      }`}
+    >
+      <h2 className="text-white text-xl font-bold mb-6">Configuration</h2>
+      <div className="space-y-4 text-white">
+        <div className="flex items-center gap-2">
+          <label className="mr-2">BPM:</label>
+          <input
+            type="number"
+            value={bpm}
+            onChange={(e) => setBpm(Math.max(40, Math.min(240, Number(e.target.value))))}
+            className="w-20 px-2 py-1 rounded bg-gray-700 text-white"
+          />
+        </div>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={isMetronomeOn}
+            onChange={(e) => setIsMetronomeOn(e.target.checked)}
+            className="w-4 h-4"
+          />
+          Metronome
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={useCountIn}
+            onChange={(e) => setUseCountIn(e.target.checked)}
+            className="w-4 h-4"
+          />
+          Count-in
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={isLooping}
+            onChange={(e) => setIsLooping(e.target.checked)}
+            className="w-4 h-4"
+          />
+          Loop
+        </label>
+      </div>
+    </div>
+  );
+}
+
 export default function MPC() {
   const [bpm, setBpm] = useState(120);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -136,6 +219,19 @@ export default function MPC() {
   const [showShortcuts, setShowShortcuts] = useState(true);
   const audioContextRef = useRef<AudioContext | null>(null);
   const [failedSamples, setFailedSamples] = useState<Set<number>>(new Set());
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
+  const [currentPattern, setCurrentPattern] = useState<Pattern | null>(null);
+  const playbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isMetronomeOn, setIsMetronomeOn] = useState(false);
+  const [useCountIn, setUseCountIn] = useState(false);
+  const [isLooping, setIsLooping] = useState(false);
+  const metronomeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const countInTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
+
+  // Calculate beat duration in ms from BPM
+  const beatDuration = useMemo(() => 60000 / bpm, [bpm]);
 
   // Initialize audio context and load samples
   useEffect(() => {
@@ -172,6 +268,37 @@ export default function MPC() {
     };
   }, []);
 
+  const playMetronomeSound = useCallback(() => {
+    if (audioContextRef.current) {
+      const oscillator = audioContextRef.current.createOscillator();
+      const gainNode = audioContextRef.current.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContextRef.current.destination);
+      
+      oscillator.frequency.setValueAtTime(880, audioContextRef.current.currentTime);
+      gainNode.gain.setValueAtTime(0.1, audioContextRef.current.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContextRef.current.currentTime + 0.1);
+      
+      oscillator.start();
+      oscillator.stop(audioContextRef.current.currentTime + 0.1);
+    }
+  }, []);
+
+  const startMetronome = useCallback(() => {
+    if (metronomeIntervalRef.current) return;
+    
+    playMetronomeSound();
+    metronomeIntervalRef.current = setInterval(playMetronomeSound, beatDuration);
+  }, [beatDuration, playMetronomeSound]);
+
+  const stopMetronome = useCallback(() => {
+    if (metronomeIntervalRef.current) {
+      clearInterval(metronomeIntervalRef.current);
+      metronomeIntervalRef.current = null;
+    }
+  }, []);
+
   const playSound = useCallback(
     (padId: number) => {
       if (audioContextRef.current && samples.has(padId)) {
@@ -184,20 +311,127 @@ export default function MPC() {
     [samples]
   );
 
-  const handlePadPress = useCallback(
-    (padId: number) => {
-      playSound(padId);
-      setActivePads((prev) => new Set([...prev, padId]));
-      setTimeout(() => {
-        setActivePads((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(padId);
-          return newSet;
-        });
-      }, 100);
-    },
-    [playSound]
-  );
+  const handlePadPress = useCallback((padId: number) => {
+    playSound(padId);
+    setActivePads(prev => new Set([...prev, padId]));
+    
+    // Record the pad hit if recording
+    if (isRecording && recordingStartTime) {
+      const timestamp = Date.now() - recordingStartTime;
+      setCurrentPattern(prev => ({
+        hits: [...(prev?.hits || []), { padId, timestamp }],
+        duration: prev?.duration || 0,
+        loop: prev?.loop
+      }));
+    }
+
+    setTimeout(() => {
+      setActivePads(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(padId);
+        return newSet;
+      });
+    }, 100);
+  }, [playSound, isRecording, recordingStartTime]);
+
+  const playPattern = useCallback(() => {
+    if (!currentPattern || isRecording) return;
+    
+    const startPlayback = () => {
+      setIsPlaying(true);
+
+      // Schedule all pad hits
+      currentPattern.hits.forEach(hit => {
+        playbackTimeoutRef.current = setTimeout(() => {
+          handlePadPress(hit.padId);
+        }, hit.timestamp);
+      });
+
+      // Handle pattern end
+      playbackTimeoutRef.current = setTimeout(() => {
+        if (isLooping) {
+          startPlayback(); // Restart if looping
+        } else {
+          setIsPlaying(false);
+          if (isMetronomeOn) stopMetronome();
+        }
+      }, currentPattern.duration);
+    };
+
+    // Handle count-in
+    if (useCountIn && !isPlaying) {
+      setIsPlaying(true);
+      let count = 0;
+      const countInBeats = 4; // One measure
+
+      const playCountIn = () => {
+        playMetronomeSound();
+        count++;
+        if (count < countInBeats) {
+          countInTimeoutRef.current = setTimeout(playCountIn, beatDuration);
+        } else {
+          startPlayback();
+        }
+      };
+
+      playCountIn();
+    } else {
+      startPlayback();
+    }
+
+    // Start metronome if enabled
+    if (isMetronomeOn) startMetronome();
+  }, [currentPattern, isRecording, isLooping, beatDuration, isMetronomeOn, useCountIn, handlePadPress, playMetronomeSound, startMetronome, stopMetronome]);
+
+  const startRecording = useCallback(() => {
+    setIsRecording(true);
+    setRecordingStartTime(Date.now());
+    // Start playing existing pattern if it exists
+    if (currentPattern) {
+      playPattern();
+    }
+  }, [currentPattern, playPattern]);
+
+  const stopRecording = useCallback(() => {
+    if (recordingStartTime === null) return;
+    
+    setIsRecording(false);
+    const duration = Date.now() - recordingStartTime;
+    setCurrentPattern(prev => ({
+      hits: prev?.hits || [],
+      duration: prev ? Math.max(prev.duration, duration) : duration,
+      loop: prev?.loop
+    }));
+    setRecordingStartTime(null);
+  }, [recordingStartTime]);
+
+  // Update metronome interval when BPM changes
+  useEffect(() => {
+    if (isMetronomeOn) {
+      stopMetronome();
+      startMetronome();
+    }
+  }, [bpm, isMetronomeOn, startMetronome, stopMetronome]);
+
+  const stopPattern = useCallback(() => {
+    if (playbackTimeoutRef.current) {
+      clearTimeout(playbackTimeoutRef.current);
+    }
+    if (countInTimeoutRef.current) {
+      clearTimeout(countInTimeoutRef.current);
+    }
+    stopMetronome();
+    setIsPlaying(false);
+  }, [stopMetronome]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (playbackTimeoutRef.current) clearTimeout(playbackTimeoutRef.current);
+      if (countInTimeoutRef.current) clearTimeout(countInTimeoutRef.current);
+      if (metronomeIntervalRef.current) clearInterval(metronomeIntervalRef.current);
+    };
+  }, []);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -235,6 +469,10 @@ export default function MPC() {
     };
   }, [handleKeyDown, handleKeyUp]);
 
+  const clearPattern = useCallback(() => {
+    setCurrentPattern(null);
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-900 p-8">
       <div className="max-w-4xl mx-auto">
@@ -246,29 +484,70 @@ export default function MPC() {
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <div className="text-white">
-              <label className="mr-2">BPM:</label>
-              <input
-                type="number"
-                value={bpm}
-                onChange={(e) =>
-                  setBpm(Math.max(40, Math.min(240, Number(e.target.value))))
-                }
-                className="w-20 px-2 py-1 rounded bg-gray-800 text-white"
-              />
-            </div>
             <button
-              onClick={() => setIsPlaying(!isPlaying)}
-              className={`px-4 py-2 rounded ${
-                isPlaying
-                  ? "bg-red-500 hover:bg-red-600"
-                  : "bg-green-500 hover:bg-green-600"
-              } text-white`}
+              onClick={() => setIsConfigOpen(!isConfigOpen)}
+              className="px-4 py-2 rounded bg-gray-700 hover:bg-gray-600 text-white"
             >
-              {isPlaying ? "Stop" : "Play"}
+              ⚙️ Config
             </button>
+            <div className="flex gap-2">
+              {!isRecording && !isPlaying && (
+                <>
+                  <button
+                    onClick={startRecording}
+                    className="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white"
+                  >
+                    {currentPattern ? "Overdub" : "Record"}
+                  </button>
+                  {currentPattern && (
+                    <>
+                      <button
+                        onClick={playPattern}
+                        className="px-4 py-2 rounded bg-green-500 hover:bg-green-600 text-white"
+                      >
+                        Play
+                      </button>
+                      <button
+                        onClick={clearPattern}
+                        className="px-4 py-2 rounded bg-gray-500 hover:bg-gray-600 text-white"
+                      >
+                        Clear
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
+              {isRecording && (
+                <button
+                  onClick={stopRecording}
+                  className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-600 text-white"
+                >
+                  Stop Recording
+                </button>
+              )}
+              {isPlaying && !isRecording && (
+                <button
+                  onClick={stopPattern}
+                  className="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white"
+                >
+                  Stop
+                </button>
+              )}
+            </div>
           </div>
         </div>
+
+        <ConfigPanel
+          isOpen={isConfigOpen}
+          bpm={bpm}
+          setBpm={setBpm}
+          isMetronomeOn={isMetronomeOn}
+          setIsMetronomeOn={setIsMetronomeOn}
+          useCountIn={useCountIn}
+          setUseCountIn={setUseCountIn}
+          isLooping={isLooping}
+          setIsLooping={setIsLooping}
+        />
 
         <div className="grid grid-cols-4 gap-4">
           {initialPads.map((pad) => (
