@@ -916,180 +916,176 @@ export default function MPC() {
   );
 
   return (
-    <div
-      className="h-screen flex overflow-hidden"
-      style={{ backgroundColor: headerColor }}
-    >
-      {/* Config Panel */}
+    <div className="h-screen flex flex-col overflow-hidden">
+      {/* Header with transport controls */}
       <div
-        className="bg-gray-800 h-full flex-shrink-0 flex flex-col"
-        style={{ width: `${layout.configWidth}px` }}
-        onMouseEnter={() => handleHover("config")}
+        className="p-4 border-b border-gray-700 flex items-center justify-between"
+        style={{ backgroundColor: headerColor }}
+        onMouseEnter={() => handleHover("header")}
       >
-        <div className="p-4 flex-grow overflow-y-auto">
-          <h1 className="text-2xl font-bold text-white mb-6">
-            Rainbow Beat Maker
-          </h1>
-          <div className="space-y-4">
-            <div className="text-white">
-              <label className="block mb-2">BPM</label>
-              <input
-                type="number"
-                value={bpm}
-                onChange={(e) =>
-                  setBpm(Math.max(40, Math.min(240, Number(e.target.value))))
-                }
-                className="w-full px-2 py-1 rounded bg-gray-700"
-              />
-            </div>
-            <label className="flex items-center text-white">
-              <input
-                type="checkbox"
-                checked={isMetronomeOn}
-                onChange={(e) => setIsMetronomeOn(e.target.checked)}
-                className="mr-2"
-              />
-              Metronome
-            </label>
-            <label className="flex items-center text-white">
-              <input
-                type="checkbox"
-                checked={useCountIn}
-                onChange={(e) => setUseCountIn(e.target.checked)}
-                className="mr-2"
-              />
-              Count-in
-            </label>
-            <label className="flex items-center text-white">
-              <input
-                type="checkbox"
-                checked={isLooping}
-                onChange={(e) => setIsLooping(e.target.checked)}
-                className="mr-2"
-              />
-              Loop
-            </label>
-            <div className="text-white">
-              <label className="block mb-2">Measures</label>
-              <input
-                type="number"
-                value={measures}
-                onChange={(e) =>
-                  setMeasures(Math.max(1, Math.min(8, Number(e.target.value))))
-                }
-                className="w-full px-2 py-1 rounded bg-gray-700"
-              />
-            </div>
-          </div>
-        </div>
-        {/* Config resize handle */}
-        <div
-          className="absolute right-0 top-0 w-1 h-full bg-gray-600 hover:bg-gray-500 cursor-ew-resize"
-          onMouseDown={() => setIsResizingConfig(true)}
-        />
-      </div>
+        <h1 className="text-2xl font-bold text-white">Rainbow Beat Maker</h1>
 
-      <div className="flex-grow flex flex-col h-full overflow-hidden">
-        {/* Header with transport controls */}
-        <div
-          className="p-4 border-b border-gray-700 flex items-center justify-between"
-          style={{ backgroundColor: headerColor }}
-          onMouseEnter={() => handleHover("header")}
-        >
-          <h1 className="text-2xl font-bold text-white">Rainbow Beat Maker</h1>
-
-          <div className="flex items-center gap-4">
-            {!isRecording && !isPlaying && (
-              <>
-                <button
-                  onClick={startRecording}
-                  className="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white flex items-center gap-2"
-                >
-                  <span className="text-xl">⏺</span>
-                  {currentPattern ? "Overdub" : "Record"}
-                </button>
-                {currentPattern && (
-                  <button
-                    onClick={playPattern}
-                    className="px-4 py-2 rounded bg-green-500 hover:bg-green-600 text-white flex items-center gap-2"
-                  >
-                    <span className="text-xl">▶</span>
-                    Play
-                  </button>
-                )}
-              </>
-            )}
-            {isRecording && (
+        <div className="flex items-center gap-4">
+          {!isRecording && !isPlaying && (
+            <>
               <button
-                onClick={stopRecording}
-                className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-600 text-white flex items-center gap-2"
-              >
-                <span className="text-xl">⏹</span>
-                Stop Recording
-              </button>
-            )}
-            {isPlaying && !isRecording && (
-              <button
-                onClick={stopPattern}
+                onClick={startRecording}
                 className="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white flex items-center gap-2"
               >
-                <span className="text-xl">⏹</span>
-                Stop
+                <span className="text-xl">⏺</span>
+                {currentPattern ? "Overdub" : "Record"}
               </button>
-            )}
-            {currentPattern && !isPlaying && !isRecording && (
-              <button
-                onClick={clearPattern}
-                className="px-4 py-2 rounded bg-gray-500 hover:bg-gray-600 text-white"
-              >
-                Clear
-              </button>
-            )}
-          </div>
+              {currentPattern && (
+                <button
+                  onClick={playPattern}
+                  className="px-4 py-2 rounded bg-green-500 hover:bg-green-600 text-white flex items-center gap-2"
+                >
+                  <span className="text-xl">▶</span>
+                  Play
+                </button>
+              )}
+            </>
+          )}
+          {isRecording && (
+            <button
+              onClick={stopRecording}
+              className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-600 text-white flex items-center gap-2"
+            >
+              <span className="text-xl">⏹</span>
+              Stop Recording
+            </button>
+          )}
+          {isPlaying && !isRecording && (
+            <button
+              onClick={stopPattern}
+              className="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white flex items-center gap-2"
+            >
+              <span className="text-xl">⏹</span>
+              Stop
+            </button>
+          )}
+          {currentPattern && !isPlaying && !isRecording && (
+            <button
+              onClick={clearPattern}
+              className="px-4 py-2 rounded bg-gray-500 hover:bg-gray-600 text-white"
+            >
+              Clear
+            </button>
+          )}
         </div>
-
-        {/* Timeline */}
-        <div
-          className="bg-gray-800 flex-shrink-0"
-          style={{ height: `${layout.timelineHeight}px` }}
-        >
-          <Timeline
-            pattern={currentPattern}
-            isPlaying={isPlaying}
-            currentTime={currentTime}
-            duration={currentPattern?.duration || 0}
-            measures={measures}
-            bpm={bpm}
-            height={layout.timelineHeight - 40}
-            onHeightChange={(height) =>
-              setLayout((prev) => ({ ...prev, timelineHeight: height }))
-            }
-            pads={initialPads}
-            onHover={(element) => handleHover("timeline", element)}
-          />
-          {/* Timeline resize handle */}
-          <div
-            className="h-1 w-full bg-gray-600 hover:bg-gray-500 cursor-ns-resize"
-            onMouseDown={() => setIsResizingTimeline(true)}
-          />
-        </div>
-
-        {/* Pads */}
-        <Pads
-          pads={initialPads}
-          activePads={activePads}
-          failedSamples={failedSamples}
-          showShortcuts={showShortcuts}
-          onPadPress={handlePadPress}
-          onHover={(element) => handleHover("pads", element)}
-        />
-
-        {/* Footer */}
-        <Footer
-          hoveredElement={hoveredElement}
-          hoveredSection={hoveredSection}
-        />
       </div>
+
+      <div className="flex-grow flex overflow-hidden">
+        {/* Config Panel */}
+        <div
+          className="bg-gray-800 h-full flex-shrink-0 flex flex-col"
+          style={{ width: `${layout.configWidth}px` }}
+          onMouseEnter={() => handleHover("config")}
+        >
+          <div className="p-4 flex-grow overflow-y-auto">
+            <div className="space-y-4">
+              <div className="text-white">
+                <label className="block mb-2">BPM</label>
+                <input
+                  type="number"
+                  value={bpm}
+                  onChange={(e) =>
+                    setBpm(Math.max(40, Math.min(240, Number(e.target.value))))
+                  }
+                  className="w-full px-2 py-1 rounded bg-gray-700"
+                />
+              </div>
+              <label className="flex items-center text-white">
+                <input
+                  type="checkbox"
+                  checked={isMetronomeOn}
+                  onChange={(e) => setIsMetronomeOn(e.target.checked)}
+                  className="mr-2"
+                />
+                Metronome
+              </label>
+              <label className="flex items-center text-white">
+                <input
+                  type="checkbox"
+                  checked={useCountIn}
+                  onChange={(e) => setUseCountIn(e.target.checked)}
+                  className="mr-2"
+                />
+                Count-in
+              </label>
+              <label className="flex items-center text-white">
+                <input
+                  type="checkbox"
+                  checked={isLooping}
+                  onChange={(e) => setIsLooping(e.target.checked)}
+                  className="mr-2"
+                />
+                Loop
+              </label>
+              <div className="text-white">
+                <label className="block mb-2">Measures</label>
+                <input
+                  type="number"
+                  value={measures}
+                  onChange={(e) =>
+                    setMeasures(Math.max(1, Math.min(8, Number(e.target.value))))
+                  }
+                  className="w-full px-2 py-1 rounded bg-gray-700"
+                />
+              </div>
+            </div>
+          </div>
+          {/* Config resize handle */}
+          <div
+            className="absolute right-0 top-0 w-1 h-full bg-gray-600 hover:bg-gray-500 cursor-ew-resize"
+            onMouseDown={() => setIsResizingConfig(true)}
+          />
+        </div>
+
+        <div className="flex-grow flex flex-col h-full overflow-hidden">
+          {/* Timeline */}
+          <div
+            className="bg-gray-800 flex-shrink-0"
+            style={{ height: `${layout.timelineHeight}px` }}
+          >
+            <Timeline
+              pattern={currentPattern}
+              isPlaying={isPlaying}
+              currentTime={currentTime}
+              duration={currentPattern?.duration || 0}
+              measures={measures}
+              bpm={bpm}
+              height={layout.timelineHeight - 40}
+              onHeightChange={(height) =>
+                setLayout((prev) => ({ ...prev, timelineHeight: height }))
+              }
+              pads={initialPads}
+              onHover={(element) => handleHover("timeline", element)}
+            />
+            {/* Timeline resize handle */}
+            <div
+              className="h-1 w-full bg-gray-600 hover:bg-gray-500 cursor-ns-resize"
+              onMouseDown={() => setIsResizingTimeline(true)}
+            />
+          </div>
+
+          {/* Pads */}
+          <Pads
+            pads={initialPads}
+            activePads={activePads}
+            failedSamples={failedSamples}
+            showShortcuts={showShortcuts}
+            onPadPress={handlePadPress}
+            onHover={(element) => handleHover("pads", element)}
+          />
+        </div>
+      </div>
+
+      {/* Footer */}
+      <Footer
+        hoveredElement={hoveredElement}
+        hoveredSection={hoveredSection}
+      />
     </div>
   );
 }
