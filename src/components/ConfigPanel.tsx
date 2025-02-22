@@ -96,7 +96,9 @@ export function ConfigPanel({
               }
               className="w-20 px-2 py-1 rounded bg-gray-700 text-white"
             />
-            {showShortcuts && <span className="text-sm text-gray-400">(Ctrl+Shift+B)</span>}
+            {showShortcuts && (
+              <span className="text-sm text-gray-400">(Ctrl+Shift+B)</span>
+            )}
           </div>
           <label className="flex items-center gap-2">
             <input
@@ -105,7 +107,10 @@ export function ConfigPanel({
               onChange={(e) => setIsMetronomeOn(e.target.checked)}
               className="w-4 h-4"
             />
-            Metronome {showShortcuts && <span className="text-sm text-gray-400">(Ctrl+Shift+M)</span>}
+            Metronome{" "}
+            {showShortcuts && (
+              <span className="text-sm text-gray-400">(Ctrl+Shift+M)</span>
+            )}
           </label>
           <label className="flex items-center gap-2">
             <input
@@ -114,7 +119,10 @@ export function ConfigPanel({
               onChange={(e) => setUseCountIn(e.target.checked)}
               className="w-4 h-4"
             />
-            Count-in {showShortcuts && <span className="text-sm text-gray-400">(Ctrl+Shift+C)</span>}
+            Count-in{" "}
+            {showShortcuts && (
+              <span className="text-sm text-gray-400">(Ctrl+Shift+C)</span>
+            )}
           </label>
           <label className="flex items-center gap-2">
             <input
@@ -123,7 +131,10 @@ export function ConfigPanel({
               onChange={(e) => setIsLooping(e.target.checked)}
               className="w-4 h-4"
             />
-            Loop {showShortcuts && <span className="text-sm text-gray-400">(Ctrl+Shift+L)</span>}
+            Loop{" "}
+            {showShortcuts && (
+              <span className="text-sm text-gray-400">(Ctrl+Shift+L)</span>
+            )}
           </label>
           <div className="flex items-center gap-2">
             <label className="mr-2">Measures:</label>
@@ -135,7 +146,9 @@ export function ConfigPanel({
               }
               className="w-20 px-2 py-1 rounded bg-gray-700 text-white"
             />
-            {showShortcuts && <span className="text-sm text-gray-400">(Ctrl+Shift+M)</span>}
+            {showShortcuts && (
+              <span className="text-sm text-gray-400">(Ctrl+Shift+M)</span>
+            )}
           </div>
           <div className="flex flex-col gap-2">
             <label>Quantization:</label>
@@ -161,10 +174,12 @@ export function ConfigPanel({
                 </option>
               ))}
             </select>
-            {showShortcuts && <span className="text-sm text-gray-400">(Ctrl+Shift+Q)</span>}
+            {showShortcuts && (
+              <span className="text-sm text-gray-400">(Ctrl+Shift+Q)</span>
+            )}
           </div>
         </div>
       </div>
     </div>
   );
-} 
+}

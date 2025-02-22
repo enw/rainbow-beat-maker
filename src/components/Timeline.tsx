@@ -50,10 +50,7 @@ export function Timeline({
   }
 
   return (
-    <div 
-      className="mb-8"
-      onMouseEnter={() => onHover?.("timeline")}
-    >
+    <div className="mb-8" onMouseEnter={() => onHover?.("timeline")}>
       <div ref={timelineRef} className="bg-gray-800 rounded-lg p-4">
         <div
           className="relative bg-gray-700 rounded-t overflow-hidden"

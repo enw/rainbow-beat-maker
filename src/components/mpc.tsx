@@ -4,7 +4,14 @@ import { Footer } from "./Footer";
 import { Pads } from "./Pads";
 import { Header } from "./Header";
 import { ConfigPanel } from "./ConfigPanel";
-import { ComponentSection, Pattern, Pad, PadHit, Quantization, LayoutState } from "./types";
+import {
+  ComponentSection,
+  Pattern,
+  Pad,
+  PadHit,
+  Quantization,
+  LayoutState,
+} from "./types";
 
 const initialPads: Pad[] = [
   {
@@ -537,24 +544,25 @@ export default function MPC() {
     const playHits = () => {
       if (!currentPattern) return;
 
-      const elapsed = Date.now() - startTime;
-      const currentHits = currentPattern.hits.filter(
-        (hit) => hit.timestamp <= elapsed
-      );
+      const elapsed = (Date.now() - startTime) % currentPattern.duration; // Use modulo for proper looping
+      const currentHits = currentPattern.hits.filter((hit) => {
+        // Check if the hit should play in this frame
+        const hitTime = hit.timestamp % currentPattern.duration;
+        return hitTime <= elapsed && hitTime > elapsed - 16; // 16ms frame window
+      });
 
       currentHits.forEach((hit) => {
         playSound(hit.padId);
       });
 
-      if (elapsed < currentPattern.duration) {
-        playbackTimeoutRef.current = setTimeout(playHits, 16); // ~60fps
+      if (isLooping || elapsed < currentPattern.duration) {
+        playbackTimeoutRef.current = setTimeout(playHits, 16); // Continue playing
       } else {
-        if (isLooping) {
-          playbackTimeoutRef.current = setTimeout(playHits, 16); // Restart loop
-        } else {
-          setIsPlaying(false);
-        }
+        setIsPlaying(false); // Only stop if we're not looping and pattern is done
       }
+
+      // Update timeline position
+      setCurrentTime(elapsed);
     };
 
     playHits();
@@ -863,7 +871,10 @@ export default function MPC() {
           />
         </div>
 
-        <Footer hoveredElement={hoveredElement} hoveredSection={hoveredSection} />
+        <Footer
+          hoveredElement={hoveredElement}
+          hoveredSection={hoveredSection}
+        />
       </div>
     </div>
   );
