@@ -478,6 +478,26 @@ function saveLayout(layout: LayoutState) {
   localStorage.setItem("beatmaker-layout", JSON.stringify(layout));
 }
 
+// Define a mapping from Tailwind CSS classes to hex color values
+const colorMap = {
+  "bg-red-500": "#f56565",
+  "bg-orange-500": "#ed8936",
+  "bg-amber-500": "#f6ad55",
+  "bg-yellow-500": "#ecc94b",
+  "bg-lime-500": "#d69e2e",
+  "bg-green-500": "#48bb78",
+  "bg-emerald-500": "#38a169",
+  "bg-teal-500": "#319795",
+  "bg-cyan-500": "#00b5d8",
+  "bg-sky-500": "#4299e1",
+  "bg-blue-500": "#3182ce",
+  "bg-indigo-500": "#5a67d8",
+  "bg-violet-500": "#805ad5",
+  "bg-purple-500": "#9f7aea",
+  "bg-fuchsia-500": "#d53f8c",
+  "bg-pink-500": "#ed64a6",
+};
+
 export default function MPC() {
   const [bpm, setBpm] = useState(120);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -497,6 +517,7 @@ export default function MPC() {
   const [isResizingTimeline, setIsResizingTimeline] = useState(false);
   const [hoveredElement, setHoveredElement] = useState("");
   const [hoveredSection, setHoveredSection] = useState<ComponentSection>(null);
+  const [headerColor, setHeaderColor] = useState("#1f2937"); // Default header color (gray-800)
 
   // Set all boolean config options to true by default
   const [isMetronomeOn, setIsMetronomeOn] = useState(true);
@@ -598,11 +619,22 @@ export default function MPC() {
 
   const playSound = useCallback(
     (padId: number) => {
+      console.log(`playSound called with padId: ${padId}`); // Debug info
       if (audioContextRef.current && samples.has(padId)) {
         const source = audioContextRef.current.createBufferSource();
         source.buffer = samples.get(padId)!;
         source.connect(audioContextRef.current.destination);
         source.start();
+
+        // Change header color based on the pad played
+        const pad = initialPads.find((pad) => pad.id === padId);
+        const padColor = pad ? colorMap[pad.color.split(" ")[0]] : "#1f2937";
+        console.log(`Setting header color to: ${padColor}`); // Debug info
+        setHeaderColor(padColor); // Set the header color to the pad's color
+        setTimeout(() => {
+          console.log("Resetting header color to default"); // Debug info
+          setHeaderColor("#1f2937"); // Reset after 300ms
+        }, 300);
       }
     },
     [samples]
@@ -875,13 +907,19 @@ export default function MPC() {
     handleTimelineResize,
   ]);
 
-  const handleHover = useCallback((section: ComponentSection, element: string = "") => {
-    setHoveredSection(section);
-    setHoveredElement(element);
-  }, []);
+  const handleHover = useCallback(
+    (section: ComponentSection, element: string = "") => {
+      setHoveredSection(section);
+      setHoveredElement(element);
+    },
+    []
+  );
 
   return (
-    <div className="h-screen bg-gray-900 flex overflow-hidden">
+    <div
+      className="h-screen flex overflow-hidden"
+      style={{ backgroundColor: headerColor }}
+    >
       {/* Config Panel */}
       <div
         className="bg-gray-800 h-full flex-shrink-0 flex flex-col"
@@ -953,8 +991,9 @@ export default function MPC() {
 
       <div className="flex-grow flex flex-col h-full overflow-hidden">
         {/* Header with transport controls */}
-        <div 
-          className="bg-gray-800 p-4 border-b border-gray-700 flex items-center justify-between"
+        <div
+          className="p-4 border-b border-gray-700 flex items-center justify-between"
+          style={{ backgroundColor: headerColor }}
           onMouseEnter={() => handleHover("header")}
         >
           <h1 className="text-2xl font-bold text-white">Rainbow Beat Maker</h1>
@@ -1046,7 +1085,7 @@ export default function MPC() {
         />
 
         {/* Footer */}
-        <Footer 
+        <Footer
           hoveredElement={hoveredElement}
           hoveredSection={hoveredSection}
         />
