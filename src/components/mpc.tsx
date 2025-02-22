@@ -149,6 +149,8 @@ type ConfigPanelProps = {
   setUseCountIn: (on: boolean) => void;
   isLooping: boolean;
   setIsLooping: (on: boolean) => void;
+  measures: number;
+  setMeasures: (measures: number) => void;
 };
 
 function ConfigPanel({
@@ -161,6 +163,8 @@ function ConfigPanel({
   setUseCountIn,
   isLooping,
   setIsLooping,
+  measures,
+  setMeasures,
 }: ConfigPanelProps) {
   return (
     <div 
@@ -206,7 +210,154 @@ function ConfigPanel({
           />
           Loop
         </label>
+        <div className="flex items-center gap-2">
+          <label className="mr-2">Measures:</label>
+          <input
+            type="number"
+            value={measures}
+            onChange={(e) => setMeasures(Math.max(1, Math.min(8, Number(e.target.value))))}
+            className="w-20 px-2 py-1 rounded bg-gray-700 text-white"
+          />
+        </div>
       </div>
+    </div>
+  );
+}
+
+// Add new types for visualization
+type TimelineProps = {
+  pattern: Pattern | null;
+  isPlaying: boolean;
+  currentTime: number;
+  duration: number;
+  measures: number;
+  bpm: number;
+  height: number;
+  onHeightChange: (height: number) => void;
+};
+
+function Timeline({ pattern, isPlaying, currentTime, duration, measures, bpm, height, onHeightChange }: TimelineProps) {
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const resizeRef = useRef<HTMLDivElement>(null);
+  const [isResizing, setIsResizing] = useState(false);
+  const minHeight = 100;
+  const maxHeight = 400;
+
+  // Calculate timing markers
+  const beatsPerMeasure = 4;
+  const totalBeats = measures * beatsPerMeasure;
+  const beatDuration = 60000 / bpm; // ms per beat
+  const measureDuration = beatDuration * beatsPerMeasure;
+
+  // Handle resize drag
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isResizing && timelineRef.current) {
+        const rect = timelineRef.current.getBoundingClientRect();
+        const newHeight = Math.max(minHeight, Math.min(maxHeight, e.clientY - rect.top));
+        onHeightChange(newHeight);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing, onHeightChange]);
+
+  return (
+    <div ref={timelineRef} className="mb-8 bg-gray-800 rounded-lg p-4">
+      <div 
+        className="relative bg-gray-700 rounded overflow-hidden"
+        style={{ height: `${height}px` }}
+      >
+        {/* Measure markers */}
+        <div className="absolute inset-0">
+          {Array.from({ length: measures + 1 }).map((_, i) => (
+            <div
+              key={`measure-${i}`}
+              className="absolute top-0 h-full w-px bg-gray-500"
+              style={{ left: `${(i / measures) * 100}%` }}
+            >
+              <div className="absolute top-0 text-xs text-gray-400">{i + 1}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Beat markers */}
+        <div className="absolute inset-0">
+          {Array.from({ length: totalBeats + 1 }).map((_, i) => (
+            <div
+              key={`beat-${i}`}
+              className="absolute top-0 h-full w-px bg-gray-600 opacity-50"
+              style={{ left: `${(i / totalBeats) * 100}%` }}
+            />
+          ))}
+        </div>
+
+        {/* Tracks for each pad */}
+        <div className="absolute inset-0">
+          {initialPads.map((pad, trackIndex) => {
+            const trackHeight = (height - 24) / initialPads.length;
+            const trackTop = trackHeight * trackIndex + 20;
+
+            return (
+              <div
+                key={pad.id}
+                className="absolute w-full"
+                style={{
+                  top: trackTop,
+                  height: trackHeight - 1,
+                  backgroundColor: 'rgba(0,0,0,0.2)'
+                }}
+              >
+                <div className="absolute left-2 text-xs text-gray-400">{pad.name}</div>
+                {/* Hits for this pad */}
+                {pattern?.hits.filter(hit => hit.padId === pad.id).map((hit, index) => {
+                  const position = (hit.timestamp / duration) * 100;
+                  return (
+                    <div
+                      key={index}
+                      className={`absolute h-full w-2 ${pad.color} opacity-75`}
+                      style={{
+                        left: `${position}%`,
+                        transform: 'translateX(-50%)'
+                      }}
+                    />
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Playback position indicator */}
+        {isPlaying && (
+          <div 
+            className="absolute top-0 h-full w-px bg-white z-10"
+            style={{
+              left: `${(currentTime / duration) * 100}%`,
+              transition: 'left 100ms linear'
+            }}
+          />
+        )}
+      </div>
+
+      {/* Resize handle */}
+      <div
+        ref={resizeRef}
+        className="h-2 w-full bg-gray-600 hover:bg-gray-500 cursor-ns-resize"
+        onMouseDown={() => setIsResizing(true)}
+      />
     </div>
   );
 }
@@ -229,6 +380,9 @@ export default function MPC() {
   const metronomeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const countInTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [measures, setMeasures] = useState(4);
+  const [timelineHeight, setTimelineHeight] = useState(200);
 
   // Calculate beat duration in ms from BPM
   const beatDuration = useMemo(() => 60000 / bpm, [bpm]);
@@ -473,6 +627,28 @@ export default function MPC() {
     setCurrentPattern(null);
   }, []);
 
+  // Update current time during playback
+  useEffect(() => {
+    if (isPlaying && currentPattern) {
+      const startTime = Date.now();
+      const interval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        setCurrentTime(elapsed);
+        
+        if (elapsed >= currentPattern.duration) {
+          if (!isLooping) {
+            setCurrentTime(0);
+          }
+        }
+      }, 16); // ~60fps
+
+      return () => {
+        clearInterval(interval);
+        setCurrentTime(0);
+      };
+    }
+  }, [isPlaying, currentPattern, isLooping]);
+
   return (
     <div className="min-h-screen bg-gray-900 p-8">
       <div className="max-w-4xl mx-auto">
@@ -547,6 +723,19 @@ export default function MPC() {
           setUseCountIn={setUseCountIn}
           isLooping={isLooping}
           setIsLooping={setIsLooping}
+          measures={measures}
+          setMeasures={setMeasures}
+        />
+
+        <Timeline
+          pattern={currentPattern}
+          isPlaying={isPlaying}
+          currentTime={currentTime}
+          duration={currentPattern?.duration || 0}
+          measures={measures}
+          bpm={bpm}
+          height={timelineHeight}
+          onHeightChange={setTimelineHeight}
         />
 
         <div className="grid grid-cols-4 gap-4">
