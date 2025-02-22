@@ -1,5 +1,5 @@
 "use client"
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 type Pad = {
   id: number;
@@ -27,16 +27,53 @@ const initialPads: Pad[] = [
   { id: 16, name: 'Perc 2', key: ',', color: 'bg-orange-700 hover:bg-orange-800' },
 ];
 
+const keyToPadMap = new Map(initialPads.map(pad => 
+  [pad.key.toLowerCase(), pad.id]
+));
+
 export default function MPC() {
   const [bpm, setBpm] = useState(120);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [activePad, setActivePad] = useState<number | null>(null);
+  const [activePads, setActivePads] = useState<Set<number>>(new Set());
 
   const handlePadPress = useCallback((padId: number) => {
-    setActivePad(padId);
-    // Audio playback logic would go here
-    setTimeout(() => setActivePad(null), 100);
+    setActivePads(prev => new Set([...prev, padId]));
+    setTimeout(() => {
+      setActivePads(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(padId);
+        return newSet;
+      });
+    }, 100);
   }, []);
+
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    const padId = keyToPadMap.get(event.key.toLowerCase());
+    if (padId) {
+      setActivePads(prev => new Set([...prev, padId]));
+      handlePadPress(padId);
+    }
+  }, [handlePadPress]);
+
+  const handleKeyUp = useCallback((event: KeyboardEvent) => {
+    const padId = keyToPadMap.get(event.key.toLowerCase());
+    if (padId) {
+      setActivePads(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(padId);
+        return newSet;
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [handleKeyDown, handleKeyUp]);
 
   return (
     <div className="min-h-screen bg-gray-900 p-8">
@@ -67,7 +104,9 @@ export default function MPC() {
             <button
               key={pad.id}
               onMouseDown={() => handlePadPress(pad.id)}
-              className={`${pad.color} p-6 rounded-lg aspect-square flex items-center justify-center text-xl font-bold text-white transition-transform ${activePad === pad.id ? 'scale-90' : 'scale-100'}`}
+              className={`${pad.color} p-6 rounded-lg aspect-square flex items-center justify-center text-xl font-bold text-white transition-transform ${
+                activePads.has(pad.id) ? 'scale-90' : 'scale-100'
+              }`}
             >
               {pad.key}
             </button>
