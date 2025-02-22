@@ -133,6 +133,7 @@ export default function MPC() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [activePads, setActivePads] = useState<Set<number>>(new Set());
   const [samples, setSamples] = useState<Map<number, AudioBuffer>>(new Map());
+  const [showShortcuts, setShowShortcuts] = useState(true);
   const audioContextRef = useRef<AudioContext | null>(null);
 
   // Initialize audio context and load samples
@@ -198,6 +199,11 @@ export default function MPC() {
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() === 'k') {
+        setShowShortcuts(prev => !prev);
+        return;
+      }
+      
       const padId = keyToPadMap.get(event.key.toLowerCase());
       if (padId) {
         setActivePads((prev) => new Set([...prev, padId]));
@@ -231,7 +237,12 @@ export default function MPC() {
     <div className="min-h-screen bg-gray-900 p-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-white">MPC Beats</h1>
+          <div>
+            <h1 className="text-3xl font-bold text-white">MPC Beats</h1>
+            <p className="text-gray-400 text-sm mt-1">
+              Press 'K' to {showShortcuts ? 'hide' : 'show'} keyboard shortcuts
+            </p>
+          </div>
           <div className="flex items-center gap-4">
             <div className="text-white">
               <label className="mr-2">BPM:</label>
@@ -264,11 +275,14 @@ export default function MPC() {
               onMouseDown={() => handlePadPress(pad.id)}
               className={`${
                 pad.color
-              } p-6 rounded-lg aspect-square flex items-center justify-center text-xl font-bold text-white transition-transform ${
+              } p-6 rounded-lg aspect-square flex flex-col items-center justify-center text-white transition-transform ${
                 activePads.has(pad.id) ? "scale-90" : "scale-100"
               }`}
             >
-              {pad.key}
+              <span className="text-lg font-bold">{pad.name}</span>
+              {showShortcuts && (
+                <span className="text-sm opacity-80 mt-1">({pad.key})</span>
+              )}
             </button>
           ))}
         </div>
