@@ -1,5 +1,7 @@
 "use client";
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { Footer } from "./Footer";
+import { Pads } from "./Pads";
 
 type Pad = {
   id: number;
@@ -287,6 +289,8 @@ type TimelineProps = {
   bpm: number;
   height: number;
   onHeightChange: (height: number) => void;
+  pads: Pad[];
+  onHover: (description: string) => void;
 };
 
 function Timeline({
@@ -298,6 +302,8 @@ function Timeline({
   bpm,
   height,
   onHeightChange,
+  pads,
+  onHover,
 }: TimelineProps) {
   const timelineRef = useRef<HTMLDivElement>(null);
   const resizeRef = useRef<HTMLDivElement>(null);
@@ -381,8 +387,8 @@ function Timeline({
 
           {/* Tracks for each pad */}
           <div className="absolute inset-0">
-            {initialPads.map((pad, trackIndex) => {
-              const trackHeight = (height - 24) / initialPads.length;
+            {pads.map((pad, trackIndex) => {
+              const trackHeight = (height - 24) / pads.length;
               const trackTop = trackHeight * trackIndex + 20;
 
               return (
@@ -459,13 +465,17 @@ const DEFAULT_LAYOUT: LayoutState = {
 };
 
 function loadLayout(): LayoutState {
-  if (typeof window === 'undefined') return DEFAULT_LAYOUT;
-  const saved = localStorage.getItem('beatmaker-layout');
-  return saved ? JSON.parse(saved) : DEFAULT_LAYOUT;
+  if (typeof window === "undefined") return DEFAULT_LAYOUT;
+  try {
+    const saved = localStorage.getItem("beatmaker-layout");
+    return saved ? JSON.parse(saved) : DEFAULT_LAYOUT;
+  } catch {
+    return DEFAULT_LAYOUT;
+  }
 }
 
 function saveLayout(layout: LayoutState) {
-  localStorage.setItem('beatmaker-layout', JSON.stringify(layout));
+  localStorage.setItem("beatmaker-layout", JSON.stringify(layout));
 }
 
 export default function MPC() {
@@ -485,6 +495,8 @@ export default function MPC() {
   const [layout, setLayout] = useState<LayoutState>(loadLayout);
   const [isResizingConfig, setIsResizingConfig] = useState(false);
   const [isResizingTimeline, setIsResizingTimeline] = useState(false);
+  const [hoveredElement, setHoveredElement] = useState("");
+  const [hoveredSection, setHoveredSection] = useState<ComponentSection>(null);
 
   // Set all boolean config options to true by default
   const [isMetronomeOn, setIsMetronomeOn] = useState(true);
@@ -613,10 +625,14 @@ export default function MPC() {
         }
 
         // Quantize timestamp
-        const quantizedTimestamp = Math.round(timestamp / noteDuration) * noteDuration;
+        const quantizedTimestamp =
+          Math.round(timestamp / noteDuration) * noteDuration;
 
         setCurrentPattern((prev) => ({
-          hits: [...(prev?.hits || []), { padId, timestamp: quantizedTimestamp }],
+          hits: [
+            ...(prev?.hits || []),
+            { padId, timestamp: quantizedTimestamp },
+          ],
           duration: prev?.duration || 0,
           loop: prev?.loop,
         }));
@@ -814,53 +830,77 @@ export default function MPC() {
     saveLayout(layout);
   }, [layout]);
 
-  const handleConfigResize = useCallback((e: MouseEvent) => {
-    if (isResizingConfig) {
-      const newWidth = Math.max(200, Math.min(400, e.clientX));
-      setLayout(prev => ({ ...prev, configWidth: newWidth }));
-    }
-  }, [isResizingConfig]);
+  const handleConfigResize = useCallback(
+    (e: MouseEvent) => {
+      if (isResizingConfig) {
+        const newWidth = Math.max(200, Math.min(400, e.clientX));
+        setLayout((prev) => ({ ...prev, configWidth: newWidth }));
+      }
+    },
+    [isResizingConfig]
+  );
 
-  const handleTimelineResize = useCallback((e: MouseEvent) => {
-    if (isResizingTimeline) {
-      const newHeight = Math.max(100, Math.min(600, e.clientY));
-      setLayout(prev => ({ ...prev, timelineHeight: newHeight }));
-    }
-  }, [isResizingTimeline]);
+  const handleTimelineResize = useCallback(
+    (e: MouseEvent) => {
+      if (isResizingTimeline) {
+        const newHeight = Math.max(100, Math.min(600, e.clientY));
+        setLayout((prev) => ({ ...prev, timelineHeight: newHeight }));
+      }
+    },
+    [isResizingTimeline]
+  );
 
   useEffect(() => {
     if (isResizingConfig || isResizingTimeline) {
-      window.addEventListener('mousemove', isResizingConfig ? handleConfigResize : handleTimelineResize);
-      window.addEventListener('mouseup', () => {
+      window.addEventListener(
+        "mousemove",
+        isResizingConfig ? handleConfigResize : handleTimelineResize
+      );
+      window.addEventListener("mouseup", () => {
         setIsResizingConfig(false);
         setIsResizingTimeline(false);
       });
-      document.body.style.cursor = isResizingConfig ? 'ew-resize' : 'ns-resize';
+      document.body.style.cursor = isResizingConfig ? "ew-resize" : "ns-resize";
     }
 
     return () => {
-      window.removeEventListener('mousemove', handleConfigResize);
-      window.removeEventListener('mousemove', handleTimelineResize);
-      document.body.style.cursor = '';
+      window.removeEventListener("mousemove", handleConfigResize);
+      window.removeEventListener("mousemove", handleTimelineResize);
+      document.body.style.cursor = "";
     };
-  }, [isResizingConfig, isResizingTimeline, handleConfigResize, handleTimelineResize]);
+  }, [
+    isResizingConfig,
+    isResizingTimeline,
+    handleConfigResize,
+    handleTimelineResize,
+  ]);
+
+  const handleHover = useCallback((section: ComponentSection, element: string = "") => {
+    setHoveredSection(section);
+    setHoveredElement(element);
+  }, []);
 
   return (
     <div className="h-screen bg-gray-900 flex overflow-hidden">
       {/* Config Panel */}
-      <div 
+      <div
         className="bg-gray-800 h-full flex-shrink-0 flex flex-col"
         style={{ width: `${layout.configWidth}px` }}
+        onMouseEnter={() => handleHover("config")}
       >
         <div className="p-4 flex-grow overflow-y-auto">
-          <h1 className="text-2xl font-bold text-white mb-6">Rainbow Beat Maker</h1>
+          <h1 className="text-2xl font-bold text-white mb-6">
+            Rainbow Beat Maker
+          </h1>
           <div className="space-y-4">
             <div className="text-white">
               <label className="block mb-2">BPM</label>
               <input
                 type="number"
                 value={bpm}
-                onChange={(e) => setBpm(Math.max(40, Math.min(240, Number(e.target.value))))}
+                onChange={(e) =>
+                  setBpm(Math.max(40, Math.min(240, Number(e.target.value))))
+                }
                 className="w-full px-2 py-1 rounded bg-gray-700"
               />
             </div>
@@ -896,7 +936,9 @@ export default function MPC() {
               <input
                 type="number"
                 value={measures}
-                onChange={(e) => setMeasures(Math.max(1, Math.min(8, Number(e.target.value))))}
+                onChange={(e) =>
+                  setMeasures(Math.max(1, Math.min(8, Number(e.target.value))))
+                }
                 className="w-full px-2 py-1 rounded bg-gray-700"
               />
             </div>
@@ -911,9 +953,12 @@ export default function MPC() {
 
       <div className="flex-grow flex flex-col h-full overflow-hidden">
         {/* Header with transport controls */}
-        <div className="bg-gray-800 p-4 border-b border-gray-700 flex items-center justify-between">
+        <div 
+          className="bg-gray-800 p-4 border-b border-gray-700 flex items-center justify-between"
+          onMouseEnter={() => handleHover("header")}
+        >
           <h1 className="text-2xl font-bold text-white">Rainbow Beat Maker</h1>
-          
+
           <div className="flex items-center gap-4">
             {!isRecording && !isPlaying && (
               <>
@@ -965,7 +1010,7 @@ export default function MPC() {
         </div>
 
         {/* Timeline */}
-        <div 
+        <div
           className="bg-gray-800 flex-shrink-0"
           style={{ height: `${layout.timelineHeight}px` }}
         >
@@ -977,7 +1022,11 @@ export default function MPC() {
             measures={measures}
             bpm={bpm}
             height={layout.timelineHeight - 40}
-            onHeightChange={height => setLayout(prev => ({ ...prev, timelineHeight: height }))}
+            onHeightChange={(height) =>
+              setLayout((prev) => ({ ...prev, timelineHeight: height }))
+            }
+            pads={initialPads}
+            onHover={(element) => handleHover("timeline", element)}
           />
           {/* Timeline resize handle */}
           <div
@@ -987,32 +1036,20 @@ export default function MPC() {
         </div>
 
         {/* Pads */}
-        <div className="flex-grow bg-gray-900 overflow-auto flex items-center justify-center">
-          <div className="p-4" style={{ width: 'min(100%, 600px)' }}>
-            <div className="grid grid-cols-4 gap-4">
-              {initialPads.map((pad) => (
-                <div key={pad.id} className="aspect-square">
-                  <button
-                    onMouseDown={() => handlePadPress(pad.id)}
-                    className={`${
-                      pad.color
-                    } rounded-lg w-full h-full flex flex-col items-center justify-center text-white transition-transform ${
-                      activePads.has(pad.id) ? "scale-90" : "scale-100"
-                    }`}
-                  >
-                    <span className="text-lg font-bold">
-                      {pad.name}
-                      {failedSamples.has(pad.id) && " ★"}
-                    </span>
-                    {showShortcuts && (
-                      <span className="text-sm opacity-80 mt-1">({pad.key})</span>
-                    )}
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <Pads
+          pads={initialPads}
+          activePads={activePads}
+          failedSamples={failedSamples}
+          showShortcuts={showShortcuts}
+          onPadPress={handlePadPress}
+          onHover={(element) => handleHover("pads", element)}
+        />
+
+        {/* Footer */}
+        <Footer 
+          hoveredElement={hoveredElement}
+          hoveredSection={hoveredSection}
+        />
       </div>
     </div>
   );
