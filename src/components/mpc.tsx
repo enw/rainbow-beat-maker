@@ -191,9 +191,9 @@ function ConfigPanel({
   setQuantization,
 }: ConfigPanelProps) {
   return (
-    <div 
+    <div
       className={`fixed right-0 top-0 h-full w-64 bg-gray-800 p-6 transform transition-transform duration-300 z-50 ${
-        isOpen ? 'translate-x-0' : 'translate-x-full'
+        isOpen ? "translate-x-0" : "translate-x-full"
       }`}
     >
       <h2 className="text-white text-xl font-bold mb-6">Configuration</h2>
@@ -203,7 +203,9 @@ function ConfigPanel({
           <input
             type="number"
             value={bpm}
-            onChange={(e) => setBpm(Math.max(40, Math.min(240, Number(e.target.value))))}
+            onChange={(e) =>
+              setBpm(Math.max(40, Math.min(240, Number(e.target.value))))
+            }
             className="w-20 px-2 py-1 rounded bg-gray-700 text-white"
           />
         </div>
@@ -239,7 +241,9 @@ function ConfigPanel({
           <input
             type="number"
             value={measures}
-            onChange={(e) => setMeasures(Math.max(1, Math.min(8, Number(e.target.value))))}
+            onChange={(e) =>
+              setMeasures(Math.max(1, Math.min(8, Number(e.target.value))))
+            }
             className="w-20 px-2 py-1 rounded bg-gray-700 text-white"
           />
         </div>
@@ -248,17 +252,19 @@ function ConfigPanel({
           <select
             value={`${quantization.value}-${quantization.triplet}`}
             onChange={(e) => {
-              const [value, triplet] = e.target.value.split('-');
+              const [value, triplet] = e.target.value.split("-");
               const newQuantization = quantizationOptions.find(
-                q => q.value === Number(value) && q.triplet === (triplet === 'true')
+                (q) =>
+                  q.value === Number(value) &&
+                  q.triplet === (triplet === "true")
               )!;
               setQuantization(newQuantization);
             }}
             className="w-full px-2 py-1 rounded bg-gray-700 text-white"
           >
             {quantizationOptions.map((q) => (
-              <option 
-                key={`${q.value}-${q.triplet}`} 
+              <option
+                key={`${q.value}-${q.triplet}`}
                 value={`${q.value}-${q.triplet}`}
               >
                 {q.label}
@@ -283,7 +289,16 @@ type TimelineProps = {
   onHeightChange: (height: number) => void;
 };
 
-function Timeline({ pattern, isPlaying, currentTime, duration, measures, bpm, height, onHeightChange }: TimelineProps) {
+function Timeline({
+  pattern,
+  isPlaying,
+  currentTime,
+  duration,
+  measures,
+  bpm,
+  height,
+  onHeightChange,
+}: TimelineProps) {
   const timelineRef = useRef<HTMLDivElement>(null);
   const resizeRef = useRef<HTMLDivElement>(null);
   const [isResizing, setIsResizing] = useState(false);
@@ -302,9 +317,12 @@ function Timeline({ pattern, isPlaying, currentTime, duration, measures, bpm, he
       if (isResizing && timelineRef.current) {
         const rect = timelineRef.current.getBoundingClientRect();
         const containerHeight = window.innerHeight - 200; // Account for header and padding
-        const newHeight = Math.max(minHeight, Math.min(maxHeight, e.clientY - rect.top));
+        const newHeight = Math.max(
+          minHeight,
+          Math.min(maxHeight, e.clientY - rect.top)
+        );
         const remainingHeight = containerHeight - newHeight;
-        
+
         if (remainingHeight >= minHeight) {
           onHeightChange(newHeight);
         }
@@ -316,22 +334,22 @@ function Timeline({ pattern, isPlaying, currentTime, duration, measures, bpm, he
     };
 
     if (isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = 'ns-resize';
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "ns-resize";
     }
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = '';
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
     };
   }, [isResizing, onHeightChange]);
 
   return (
     <div className="mb-8">
       <div ref={timelineRef} className="bg-gray-800 rounded-lg p-4">
-        <div 
+        <div
           className="relative bg-gray-700 rounded-t overflow-hidden"
           style={{ height: `${height}px` }}
         >
@@ -343,7 +361,9 @@ function Timeline({ pattern, isPlaying, currentTime, duration, measures, bpm, he
                 className="absolute top-0 h-full w-px bg-gray-500"
                 style={{ left: `${(i / measures) * 100}%` }}
               >
-                <div className="absolute top-0 text-xs text-gray-400">{i + 1}</div>
+                <div className="absolute top-0 text-xs text-gray-400">
+                  {i + 1}
+                </div>
               </div>
             ))}
           </div>
@@ -372,24 +392,28 @@ function Timeline({ pattern, isPlaying, currentTime, duration, measures, bpm, he
                   style={{
                     top: trackTop,
                     height: trackHeight - 1,
-                    backgroundColor: 'rgba(0,0,0,0.2)'
+                    backgroundColor: "rgba(0,0,0,0.2)",
                   }}
                 >
-                  <div className="absolute left-2 text-xs text-gray-400">{pad.name}</div>
+                  <div className="absolute left-2 text-xs text-gray-400">
+                    {pad.name}
+                  </div>
                   {/* Hits for this pad */}
-                  {pattern?.hits.filter(hit => hit.padId === pad.id).map((hit, index) => {
-                    const position = (hit.timestamp / duration) * 100;
-                    return (
-                      <div
-                        key={index}
-                        className={`absolute h-full w-2 ${pad.color} opacity-75`}
-                        style={{
-                          left: `${position}%`,
-                          transform: 'translateX(-50%)'
-                        }}
-                      />
-                    );
-                  })}
+                  {pattern?.hits
+                    .filter((hit) => hit.padId === pad.id)
+                    .map((hit, index) => {
+                      const position = (hit.timestamp / duration) * 100;
+                      return (
+                        <div
+                          key={index}
+                          className={`absolute h-full w-2 ${pad.color} opacity-75`}
+                          style={{
+                            left: `${position}%`,
+                            transform: "translateX(-50%)",
+                          }}
+                        />
+                      );
+                    })}
                 </div>
               );
             })}
@@ -397,11 +421,11 @@ function Timeline({ pattern, isPlaying, currentTime, duration, measures, bpm, he
 
           {/* Playback position indicator */}
           {isPlaying && (
-            <div 
+            <div
               className="absolute top-0 h-full w-px bg-white z-10"
               style={{
                 left: `${(currentTime / duration) * 100}%`,
-                transition: 'left 100ms linear'
+                transition: "left 100ms linear",
               }}
             />
           )}
@@ -426,7 +450,9 @@ export default function MPC() {
   const [bpm, setBpm] = useState(120);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
+  const [recordingStartTime, setRecordingStartTime] = useState<number | null>(
+    null
+  );
   const [currentPattern, setCurrentPattern] = useState<Pattern | null>(null);
   const [activePads, setActivePads] = useState<Set<number>>(new Set());
   const [samples, setSamples] = useState<Map<number, AudioBuffer>>(new Map());
@@ -436,7 +462,7 @@ export default function MPC() {
   const [currentTime, setCurrentTime] = useState(0);
   const [timelineHeight, setTimelineHeight] = useState(200);
   const [padGridHeight, setPadGridHeight] = useState(400);
-  
+
   // Set all boolean config options to true by default
   const [isMetronomeOn, setIsMetronomeOn] = useState(true);
   const [useCountIn, setUseCountIn] = useState(true);
@@ -447,7 +473,7 @@ export default function MPC() {
   const countInTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [measures, setMeasures] = useState(4);
   const [quantization, setQuantization] = useState<Quantization>(
-    quantizationOptions.find(q => q.value === 0.25 && !q.triplet)! // default to 16th notes
+    quantizationOptions.find((q) => q.value === 0.25 && !q.triplet)! // default to 16th notes
   );
 
   // Calculate beat duration in ms from BPM
@@ -492,22 +518,22 @@ export default function MPC() {
     if (audioContextRef.current) {
       const oscillator = audioContextRef.current.createOscillator();
       const gainNode = audioContextRef.current.createGain();
-      
+
       oscillator.connect(gainNode);
       gainNode.connect(audioContextRef.current.destination);
-      
+
       // Higher pitch for first beat, lower for others
       oscillator.frequency.setValueAtTime(
         isFirstBeat ? 1000 : 800,
         audioContextRef.current.currentTime
       );
-      
+
       gainNode.gain.setValueAtTime(0.1, audioContextRef.current.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(
         0.01,
         audioContextRef.current.currentTime + 0.1
       );
-      
+
       oscillator.start();
       oscillator.stop(audioContextRef.current.currentTime + 0.1);
     }
@@ -515,10 +541,10 @@ export default function MPC() {
 
   const startMetronome = useCallback(() => {
     if (metronomeIntervalRef.current) return;
-    
+
     let beatCount = 0;
     const beatsPerMeasure = 4;
-    
+
     const playBeat = () => {
       playMetronomeSound(beatCount % beatsPerMeasure === 0);
       beatCount++;
@@ -547,43 +573,50 @@ export default function MPC() {
     [samples]
   );
 
-  const handlePadPress = useCallback((padId: number) => {
-    playSound(padId);
-    setActivePads(prev => new Set([...prev, padId]));
-    
-    // Record the pad hit if recording
-    if (isRecording && recordingStartTime) {
-      const timestamp = Date.now() - recordingStartTime;
-      const beatDuration = 60000 / bpm;
-      
-      // Calculate note duration based on quantization
-      let noteDuration = beatDuration * quantization.value;
-      if (quantization.triplet) {
-        noteDuration = (noteDuration * 2) / 3; // Adjust for triplet timing
-      }
-      
-      // Quantize timestamp
-      const quantizedTimestamp = Math.round(timestamp / noteDuration) * noteDuration;
-      
-      setCurrentPattern(prev => ({
-        hits: [...(prev?.hits || []), { padId, timestamp: quantizedTimestamp }],
-        duration: prev?.duration || 0,
-        loop: prev?.loop
-      }));
-    }
+  const handlePadPress = useCallback(
+    (padId: number) => {
+      playSound(padId);
+      setActivePads((prev) => new Set([...prev, padId]));
 
-    setTimeout(() => {
-      setActivePads(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(padId);
-        return newSet;
-      });
-    }, 100);
-  }, [playSound, isRecording, recordingStartTime, bpm, quantization]);
+      // Record the pad hit if recording
+      if (isRecording && recordingStartTime) {
+        const timestamp = Date.now() - recordingStartTime;
+        const beatDuration = 60000 / bpm;
+
+        // Calculate note duration based on quantization
+        let noteDuration = beatDuration * quantization.value;
+        if (quantization.triplet) {
+          noteDuration = (noteDuration * 2) / 3; // Adjust for triplet timing
+        }
+
+        // Quantize timestamp
+        const quantizedTimestamp =
+          Math.round(timestamp / noteDuration) * noteDuration;
+
+        setCurrentPattern((prev) => ({
+          hits: [
+            ...(prev?.hits || []),
+            { padId, timestamp: quantizedTimestamp },
+          ],
+          duration: prev?.duration || 0,
+          loop: prev?.loop,
+        }));
+      }
+
+      setTimeout(() => {
+        setActivePads((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(padId);
+          return newSet;
+        });
+      }, 100);
+    },
+    [playSound, isRecording, recordingStartTime, bpm, quantization]
+  );
 
   const playPattern = useCallback(() => {
     if (!currentPattern || isRecording) return;
-    
+
     const startPlayback = () => {
       setIsPlaying(true);
 
@@ -593,7 +626,7 @@ export default function MPC() {
       }
 
       // Schedule all pad hits
-      currentPattern.hits.forEach(hit => {
+      currentPattern.hits.forEach((hit) => {
         playbackTimeoutRef.current = setTimeout(() => {
           handlePadPress(hit.padId);
         }, hit.timestamp);
@@ -630,12 +663,23 @@ export default function MPC() {
     } else {
       startPlayback();
     }
-  }, [currentPattern, isRecording, isLooping, beatDuration, isMetronomeOn, useCountIn, handlePadPress, playMetronomeSound, startMetronome, stopMetronome]);
+  }, [
+    currentPattern,
+    isRecording,
+    isLooping,
+    beatDuration,
+    isMetronomeOn,
+    useCountIn,
+    handlePadPress,
+    playMetronomeSound,
+    startMetronome,
+    stopMetronome,
+  ]);
 
   const startRecording = useCallback(() => {
     setIsRecording(true);
     setRecordingStartTime(Date.now());
-    
+
     // Start metronome if enabled
     if (isMetronomeOn) {
       startMetronome();
@@ -649,26 +693,38 @@ export default function MPC() {
 
   const stopRecording = useCallback(() => {
     if (recordingStartTime === null) return;
-    
+
     setIsRecording(false);
     const duration = Date.now() - recordingStartTime;
-    setCurrentPattern(prev => ({
+    setCurrentPattern((prev) => ({
       hits: prev?.hits || [],
       duration: prev ? Math.max(prev.duration, duration) : duration,
-      loop: prev?.loop
+      loop: prev?.loop,
     }));
     setRecordingStartTime(null);
-    
+
     // Stop metronome
     stopMetronome();
   }, [recordingStartTime, stopMetronome]);
+
+  const stopPattern = useCallback(() => {
+    if (playbackTimeoutRef.current) {
+      clearTimeout(playbackTimeoutRef.current);
+    }
+    if (countInTimeoutRef.current) {
+      clearTimeout(countInTimeoutRef.current);
+    }
+    stopMetronome();
+    setIsPlaying(false);
+  }, [stopMetronome]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (playbackTimeoutRef.current) clearTimeout(playbackTimeoutRef.current);
       if (countInTimeoutRef.current) clearTimeout(countInTimeoutRef.current);
-      if (metronomeIntervalRef.current) clearInterval(metronomeIntervalRef.current);
+      if (metronomeIntervalRef.current)
+        clearInterval(metronomeIntervalRef.current);
     };
   }, []);
 
@@ -719,7 +775,7 @@ export default function MPC() {
       const interval = setInterval(() => {
         const elapsed = Date.now() - startTime;
         setCurrentTime(elapsed);
-        
+
         if (elapsed >= currentPattern.duration) {
           if (!isLooping) {
             setCurrentTime(0);
@@ -735,20 +791,26 @@ export default function MPC() {
   }, [isPlaying, currentPattern, isLooping]);
 
   // Update both heights when resizing
-  const handleTimelineResize = useCallback((newTimelineHeight: number) => {
-    const totalHeight = timelineHeight + padGridHeight;
-    setTimelineHeight(newTimelineHeight);
-    setPadGridHeight(totalHeight - newTimelineHeight);
-  }, [timelineHeight, padGridHeight]);
+  const handleTimelineResize = useCallback(
+    (newTimelineHeight: number) => {
+      const totalHeight = timelineHeight + padGridHeight;
+      setTimelineHeight(newTimelineHeight);
+      setPadGridHeight(totalHeight - newTimelineHeight);
+    },
+    [timelineHeight, padGridHeight]
+  );
 
   return (
     <div className="min-h-screen bg-gray-900 p-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white">Rainbow Beat Maker</h1>
+            <h1 className="text-3xl font-bold text-white">
+              Rainbow Beat Maker
+            </h1>
             <p className="text-gray-400 text-sm mt-1">
-              Press &apos;K&apos; to {showShortcuts ? "hide" : "show"} keyboard shortcuts
+              Press &apos;K&apos; to {showShortcuts ? "hide" : "show"} keyboard
+              shortcuts
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -835,7 +897,7 @@ export default function MPC() {
           />
 
           {/* Pad Grid with dynamic height */}
-          <div 
+          <div
             className="grid grid-cols-4 gap-4"
             style={{ height: `${padGridHeight}px` }}
           >
