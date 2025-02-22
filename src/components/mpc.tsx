@@ -135,6 +135,7 @@ export default function MPC() {
   const [samples, setSamples] = useState<Map<number, AudioBuffer>>(new Map());
   const [showShortcuts, setShowShortcuts] = useState(true);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const [failedSamples, setFailedSamples] = useState<Set<number>>(new Set());
 
   // Initialize audio context and load samples
   useEffect(() => {
@@ -154,6 +155,7 @@ export default function MPC() {
           setSamples((prev) => new Map(prev).set(pad.id, audioBuffer));
         } catch (error) {
           console.error(`Error loading sample for pad ${pad.id}:`, error);
+          setFailedSamples(prev => new Set(prev).add(pad.id));
         }
       };
 
@@ -279,7 +281,10 @@ export default function MPC() {
                 activePads.has(pad.id) ? "scale-90" : "scale-100"
               }`}
             >
-              <span className="text-lg font-bold">{pad.name}</span>
+              <span className="text-lg font-bold">
+                {pad.name}
+                {failedSamples.has(pad.id) && " ★"}
+              </span>
               {showShortcuts && (
                 <span className="text-sm opacity-80 mt-1">({pad.key})</span>
               )}
