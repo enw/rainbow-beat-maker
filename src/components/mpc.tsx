@@ -2,14 +2,9 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { Footer } from "./Footer";
 import { Pads } from "./Pads";
-
-type Pad = {
-  id: number;
-  name: string;
-  key: string;
-  color: string;
-  soundUrl: string;
-};
+import { Header } from "./Header";
+import { ConfigPanel } from "./ConfigPanel";
+import { ComponentSection, Pattern, Pad, PadHit, Quantization, LayoutState } from "./types";
 
 const initialPads: Pad[] = [
   {
@@ -130,156 +125,6 @@ const keyToPadMap = new Map(
   initialPads.map((pad) => [pad.key.toLowerCase(), pad.id])
 );
 
-type PadHit = {
-  padId: number;
-  timestamp: number;
-};
-
-type Pattern = {
-  hits: PadHit[];
-  duration: number;
-  loop?: boolean;
-};
-
-// Add new type for quantization options
-type Quantization = {
-  value: number; // fraction of a beat (1 = whole note, 0.25 = quarter note, etc.)
-  label: string;
-  triplet: boolean;
-};
-
-const quantizationOptions: Quantization[] = [
-  { value: 4, label: "Whole Note", triplet: false },
-  { value: 4, label: "Whole Note Triplet", triplet: true },
-  { value: 2, label: "Half Note", triplet: false },
-  { value: 2, label: "Half Note Triplet", triplet: true },
-  { value: 1, label: "Quarter Note", triplet: false },
-  { value: 1, label: "Quarter Note Triplet", triplet: true },
-  { value: 0.5, label: "8th Note", triplet: false },
-  { value: 0.5, label: "8th Note Triplet", triplet: true },
-  { value: 0.25, label: "16th Note", triplet: false },
-  { value: 0.25, label: "16th Note Triplet", triplet: true },
-];
-
-type ConfigPanelProps = {
-  isOpen: boolean;
-  bpm: number;
-  setBpm: (bpm: number) => void;
-  isMetronomeOn: boolean;
-  setIsMetronomeOn: (on: boolean) => void;
-  useCountIn: boolean;
-  setUseCountIn: (on: boolean) => void;
-  isLooping: boolean;
-  setIsLooping: (on: boolean) => void;
-  measures: number;
-  setMeasures: (measures: number) => void;
-  quantization: Quantization;
-  setQuantization: (q: Quantization) => void;
-};
-
-function ConfigPanel({
-  isOpen,
-  bpm,
-  setBpm,
-  isMetronomeOn,
-  setIsMetronomeOn,
-  useCountIn,
-  setUseCountIn,
-  isLooping,
-  setIsLooping,
-  measures,
-  setMeasures,
-  quantization,
-  setQuantization,
-}: ConfigPanelProps) {
-  return (
-    <div
-      className={`fixed right-0 top-0 h-full w-64 bg-gray-800 p-6 transform transition-transform duration-300 z-50 ${
-        isOpen ? "translate-x-0" : "translate-x-full"
-      }`}
-    >
-      <h2 className="text-white text-xl font-bold mb-6">Configuration</h2>
-      <div className="space-y-4 text-white">
-        <div className="flex items-center gap-2">
-          <label className="mr-2">BPM:</label>
-          <input
-            type="number"
-            value={bpm}
-            onChange={(e) =>
-              setBpm(Math.max(40, Math.min(240, Number(e.target.value))))
-            }
-            className="w-20 px-2 py-1 rounded bg-gray-700 text-white"
-          />
-        </div>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={isMetronomeOn}
-            onChange={(e) => setIsMetronomeOn(e.target.checked)}
-            className="w-4 h-4"
-          />
-          Metronome
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={useCountIn}
-            onChange={(e) => setUseCountIn(e.target.checked)}
-            className="w-4 h-4"
-          />
-          Count-in
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={isLooping}
-            onChange={(e) => setIsLooping(e.target.checked)}
-            className="w-4 h-4"
-          />
-          Loop
-        </label>
-        <div className="flex items-center gap-2">
-          <label className="mr-2">Measures:</label>
-          <input
-            type="number"
-            value={measures}
-            onChange={(e) =>
-              setMeasures(Math.max(1, Math.min(8, Number(e.target.value))))
-            }
-            className="w-20 px-2 py-1 rounded bg-gray-700 text-white"
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label>Quantization:</label>
-          <select
-            value={`${quantization.value}-${quantization.triplet}`}
-            onChange={(e) => {
-              const [value, triplet] = e.target.value.split("-");
-              const newQuantization = quantizationOptions.find(
-                (q) =>
-                  q.value === Number(value) &&
-                  q.triplet === (triplet === "true")
-              )!;
-              setQuantization(newQuantization);
-            }}
-            className="w-full px-2 py-1 rounded bg-gray-700 text-white"
-          >
-            {quantizationOptions.map((q) => (
-              <option
-                key={`${q.value}-${q.triplet}`}
-                value={`${q.value}-${q.triplet}`}
-              >
-                {q.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Add new types for visualization
 type TimelineProps = {
   pattern: Pattern | null;
   isPlaying: boolean;
@@ -315,7 +160,6 @@ function Timeline({
   const beatsPerMeasure = 4;
   const totalBeats = measures * beatsPerMeasure;
   const beatDuration = 60000 / bpm; // ms per beat
-  const sixteenthDuration = beatDuration / 4; // duration of a 16th note
 
   // Handle resize drag
   useEffect(() => {
@@ -452,11 +296,18 @@ function Timeline({
   );
 }
 
-type LayoutState = {
-  configWidth: number;
-  timelineHeight: number;
-  padHeight: number;
-};
+const quantizationOptions: Quantization[] = [
+  { value: 4, label: "Whole Note", triplet: false },
+  { value: 4, label: "Whole Note Triplet", triplet: true },
+  { value: 2, label: "Half Note", triplet: false },
+  { value: 2, label: "Half Note Triplet", triplet: true },
+  { value: 1, label: "Quarter Note", triplet: false },
+  { value: 1, label: "Quarter Note Triplet", triplet: true },
+  { value: 0.5, label: "8th Note", triplet: false },
+  { value: 0.5, label: "8th Note Triplet", triplet: true },
+  { value: 0.25, label: "16th Note", triplet: false },
+  { value: 0.25, label: "16th Note Triplet", triplet: true },
+];
 
 const DEFAULT_LAYOUT: LayoutState = {
   configWidth: 250,
@@ -478,8 +329,8 @@ function saveLayout(layout: LayoutState) {
   localStorage.setItem("beatmaker-layout", JSON.stringify(layout));
 }
 
-// Define a mapping from Tailwind CSS classes to hex color values
-const colorMap = {
+// Update the colorMap type definition
+const colorMap: { [key: string]: string } = {
   "bg-red-500": "#f56565",
   "bg-orange-500": "#ed8936",
   "bg-amber-500": "#f6ad55",
@@ -510,7 +361,6 @@ export default function MPC() {
   const [samples, setSamples] = useState<Map<number, AudioBuffer>>(new Map());
   const [showShortcuts, setShowShortcuts] = useState(true);
   const [failedSamples, setFailedSamples] = useState<Set<number>>(new Set());
-  const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [layout, setLayout] = useState<LayoutState>(loadLayout);
   const [isResizingConfig, setIsResizingConfig] = useState(false);
@@ -518,6 +368,8 @@ export default function MPC() {
   const [hoveredElement, setHoveredElement] = useState("");
   const [hoveredSection, setHoveredSection] = useState<ComponentSection>(null);
   const [headerColor, setHeaderColor] = useState("#1f2937"); // Default header color (gray-800)
+  const [flashHeader, setFlashHeader] = useState(true); // New state for flashing header
+  const [beatCount, setBeatCount] = useState(0); // New state for beat count
 
   // Set all boolean config options to true by default
   const [isMetronomeOn, setIsMetronomeOn] = useState(true);
@@ -552,22 +404,15 @@ export default function MPC() {
           );
           setSamples((prev) => new Map(prev).set(pad.id, audioBuffer));
         } catch (error) {
-          console.error(`Error loading sample for pad ${pad.id}:`, error);
+          console.error(`Failed to load sample for pad ${pad.name}:`, error);
           setFailedSamples((prev) => new Set(prev).add(pad.id));
         }
       };
 
-      // Load all samples
       await Promise.all(initialPads.map(loadSample));
     };
 
     initAudio();
-
-    return () => {
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
-    };
   }, []);
 
   const playMetronomeSound = useCallback((isFirstBeat: boolean = false) => {
@@ -619,7 +464,6 @@ export default function MPC() {
 
   const playSound = useCallback(
     (padId: number) => {
-      console.log(`playSound called with padId: ${padId}`); // Debug info
       if (audioContextRef.current && samples.has(padId)) {
         const source = audioContextRef.current.createBufferSource();
         source.buffer = samples.get(padId)!;
@@ -627,17 +471,17 @@ export default function MPC() {
         source.start();
 
         // Change header color based on the pad played
-        const pad = initialPads.find((pad) => pad.id === padId);
-        const padColor = pad ? colorMap[pad.color.split(" ")[0]] : "#1f2937";
-        console.log(`Setting header color to: ${padColor}`); // Debug info
-        setHeaderColor(padColor); // Set the header color to the pad's color
-        setTimeout(() => {
-          console.log("Resetting header color to default"); // Debug info
-          setHeaderColor("#1f2937"); // Reset after 300ms
-        }, 300);
+        if (flashHeader) {
+          const pad = initialPads.find((pad) => pad.id === padId);
+          const padColor = pad ? colorMap[pad.color.split(" ")[0]] : "#1f2937";
+          setHeaderColor(padColor); // Set the header color to the pad's color
+          setTimeout(() => {
+            setHeaderColor("#1f2937"); // Reset after 300ms
+          }, 300);
+        }
       }
     },
-    [samples]
+    [samples, flashHeader]
   );
 
   const handlePadPress = useCallback(
@@ -668,6 +512,9 @@ export default function MPC() {
           duration: prev?.duration || 0,
           loop: prev?.loop,
         }));
+
+        // Immediately update the timeline with the new hit
+        setCurrentTime(quantizedTimestamp);
       }
 
       setTimeout(() => {
@@ -682,37 +529,40 @@ export default function MPC() {
   );
 
   const playPattern = useCallback(() => {
-    if (!currentPattern || isRecording) return;
+    if (!currentPattern) return;
 
-    const startPlayback = () => {
-      setIsPlaying(true);
+    setIsPlaying(true);
+    const startTime = Date.now();
 
-      // Start metronome if enabled
-      if (isMetronomeOn) {
-        startMetronome();
-      }
+    const playHits = () => {
+      if (!currentPattern) return;
 
-      // Schedule all pad hits
-      currentPattern.hits.forEach((hit) => {
-        playbackTimeoutRef.current = setTimeout(() => {
-          handlePadPress(hit.padId);
-        }, hit.timestamp);
+      const elapsed = Date.now() - startTime;
+      const currentHits = currentPattern.hits.filter(
+        (hit) => hit.timestamp <= elapsed
+      );
+
+      currentHits.forEach((hit) => {
+        playSound(hit.padId);
       });
 
-      // Handle pattern end
-      playbackTimeoutRef.current = setTimeout(() => {
+      if (elapsed < currentPattern.duration) {
+        playbackTimeoutRef.current = setTimeout(playHits, 16); // ~60fps
+      } else {
         if (isLooping) {
-          startPlayback(); // Restart if looping
+          playbackTimeoutRef.current = setTimeout(playHits, 16); // Restart loop
         } else {
           setIsPlaying(false);
-          stopMetronome();
         }
-      }, currentPattern.duration);
+      }
     };
 
-    // Handle count-in
-    if (useCountIn && !isPlaying) {
-      setIsPlaying(true);
+    playHits();
+  }, [currentPattern, isLooping, playSound]);
+
+  const startRecording = useCallback(() => {
+    // Handle count-in before recording
+    if (useCountIn) {
       let count = 0;
       const countInBeats = 4; // One measure
 
@@ -722,41 +572,30 @@ export default function MPC() {
         if (count < countInBeats) {
           countInTimeoutRef.current = setTimeout(playCountIn, beatDuration);
         } else {
-          startPlayback();
+          // Start recording after count-in
+          setIsRecording(true);
+          setRecordingStartTime(Date.now());
+          if (isMetronomeOn) {
+            startMetronome();
+          }
         }
       };
 
       playCountIn();
     } else {
-      startPlayback();
+      setIsRecording(true);
+      setRecordingStartTime(Date.now());
+      if (isMetronomeOn) {
+        startMetronome();
+      }
     }
   }, [
-    currentPattern,
-    isRecording,
-    isLooping,
+    useCountIn,
     beatDuration,
     isMetronomeOn,
-    useCountIn,
-    handlePadPress,
-    playMetronomeSound,
     startMetronome,
-    stopMetronome,
+    playMetronomeSound,
   ]);
-
-  const startRecording = useCallback(() => {
-    setIsRecording(true);
-    setRecordingStartTime(Date.now());
-
-    // Start metronome if enabled
-    if (isMetronomeOn) {
-      startMetronome();
-    }
-
-    // Start playing existing pattern if it exists
-    if (currentPattern) {
-      playPattern();
-    }
-  }, [currentPattern, playPattern, isMetronomeOn, startMetronome]);
 
   const stopRecording = useCallback(() => {
     if (recordingStartTime === null) return;
@@ -797,18 +636,57 @@ export default function MPC() {
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() === "k") {
-        setShowShortcuts((prev) => !prev);
-        return;
+      // Handle keyboard shortcuts
+      if (event.ctrlKey && event.shiftKey) {
+        switch (event.key.toLowerCase()) {
+          case "b":
+            setBpm((prev) => (prev >= 240 ? 40 : prev + 10));
+            break;
+          case "m":
+            setIsMetronomeOn((prev) => !prev);
+            break;
+          case "c":
+            setUseCountIn((prev) => !prev);
+            break;
+          case "l":
+            setIsLooping((prev) => !prev);
+            break;
+          case "q":
+            setQuantization((prev) => {
+              const currentIndex = quantizationOptions.findIndex(
+                (q) => q.value === prev.value && q.triplet === prev.triplet
+              );
+              const nextIndex = (currentIndex + 1) % quantizationOptions.length;
+              return quantizationOptions[nextIndex];
+            });
+            break;
+          case "h":
+            setFlashHeader((prev) => !prev);
+            break;
+          case "k":
+            setShowShortcuts((prev) => !prev);
+            break;
+        }
+        return; // Exit early for shortcuts
       }
 
+      // Handle pad triggers
       const padId = keyToPadMap.get(event.key.toLowerCase());
       if (padId) {
         setActivePads((prev) => new Set([...prev, padId]));
         handlePadPress(padId);
       }
     },
-    [handlePadPress]
+    [
+      setBpm,
+      setIsMetronomeOn,
+      setUseCountIn,
+      setIsLooping,
+      setQuantization,
+      setFlashHeader,
+      setShowShortcuts,
+      handlePadPress,
+    ]
   );
 
   const handleKeyUp = useCallback((event: KeyboardEvent) => {
@@ -916,134 +794,41 @@ export default function MPC() {
   );
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      {/* Header with transport controls */}
-      <div
-        className="p-4 border-b border-gray-700 flex items-center justify-between"
-        style={{ backgroundColor: headerColor }}
-        onMouseEnter={() => handleHover("header")}
-      >
-        <h1 className="text-2xl font-bold text-white">Rainbow Beat Maker</h1>
+    <div className="h-screen flex flex-row overflow-hidden">
+      <ConfigPanel
+        bpm={bpm}
+        setBpm={setBpm}
+        isMetronomeOn={isMetronomeOn}
+        setIsMetronomeOn={setIsMetronomeOn}
+        useCountIn={useCountIn}
+        setUseCountIn={setUseCountIn}
+        isLooping={isLooping}
+        setIsLooping={setIsLooping}
+        measures={measures}
+        setMeasures={setMeasures}
+        quantization={quantization}
+        setQuantization={setQuantization}
+        showShortcuts={showShortcuts}
+        setShowShortcuts={setShowShortcuts}
+        flashHeader={flashHeader}
+        setFlashHeader={setFlashHeader}
+      />
 
-        <div className="flex items-center gap-4">
-          {!isRecording && !isPlaying && (
-            <>
-              <button
-                onClick={startRecording}
-                className="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white flex items-center gap-2"
-              >
-                <span className="text-xl">⏺</span>
-                {currentPattern ? "Overdub" : "Record"}
-              </button>
-              {currentPattern && (
-                <button
-                  onClick={playPattern}
-                  className="px-4 py-2 rounded bg-green-500 hover:bg-green-600 text-white flex items-center gap-2"
-                >
-                  <span className="text-xl">▶</span>
-                  Play
-                </button>
-              )}
-            </>
-          )}
-          {isRecording && (
-            <button
-              onClick={stopRecording}
-              className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-600 text-white flex items-center gap-2"
-            >
-              <span className="text-xl">⏹</span>
-              Stop Recording
-            </button>
-          )}
-          {isPlaying && !isRecording && (
-            <button
-              onClick={stopPattern}
-              className="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white flex items-center gap-2"
-            >
-              <span className="text-xl">⏹</span>
-              Stop
-            </button>
-          )}
-          {currentPattern && !isPlaying && !isRecording && (
-            <button
-              onClick={clearPattern}
-              className="px-4 py-2 rounded bg-gray-500 hover:bg-gray-600 text-white"
-            >
-              Clear
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="flex-grow flex overflow-hidden">
-        {/* Config Panel */}
-        <div
-          className="bg-gray-800 h-full flex-shrink-0 flex flex-col"
-          style={{ width: `${layout.configWidth}px` }}
-          onMouseEnter={() => handleHover("config")}
-        >
-          <div className="p-4 flex-grow overflow-y-auto">
-            <div className="space-y-4">
-              <div className="text-white">
-                <label className="block mb-2">BPM</label>
-                <input
-                  type="number"
-                  value={bpm}
-                  onChange={(e) =>
-                    setBpm(Math.max(40, Math.min(240, Number(e.target.value))))
-                  }
-                  className="w-full px-2 py-1 rounded bg-gray-700"
-                />
-              </div>
-              <label className="flex items-center text-white">
-                <input
-                  type="checkbox"
-                  checked={isMetronomeOn}
-                  onChange={(e) => setIsMetronomeOn(e.target.checked)}
-                  className="mr-2"
-                />
-                Metronome
-              </label>
-              <label className="flex items-center text-white">
-                <input
-                  type="checkbox"
-                  checked={useCountIn}
-                  onChange={(e) => setUseCountIn(e.target.checked)}
-                  className="mr-2"
-                />
-                Count-in
-              </label>
-              <label className="flex items-center text-white">
-                <input
-                  type="checkbox"
-                  checked={isLooping}
-                  onChange={(e) => setIsLooping(e.target.checked)}
-                  className="mr-2"
-                />
-                Loop
-              </label>
-              <div className="text-white">
-                <label className="block mb-2">Measures</label>
-                <input
-                  type="number"
-                  value={measures}
-                  onChange={(e) =>
-                    setMeasures(Math.max(1, Math.min(8, Number(e.target.value))))
-                  }
-                  className="w-full px-2 py-1 rounded bg-gray-700"
-                />
-              </div>
-            </div>
-          </div>
-          {/* Config resize handle */}
-          <div
-            className="absolute right-0 top-0 w-1 h-full bg-gray-600 hover:bg-gray-500 cursor-ew-resize"
-            onMouseDown={() => setIsResizingConfig(true)}
-          />
-        </div>
+      <div className="flex-grow flex flex-col overflow-hidden">
+        <Header
+          currentPattern={currentPattern}
+          isPlaying={isPlaying}
+          isRecording={isRecording}
+          onPlay={playPattern}
+          onRecord={startRecording}
+          onStop={stopPattern}
+          onStopRecording={stopRecording}
+          onClear={clearPattern}
+          headerColor={headerColor}
+          beatCount={beatCount}
+        />
 
         <div className="flex-grow flex flex-col h-full overflow-hidden">
-          {/* Timeline */}
           <div
             className="bg-gray-800 flex-shrink-0"
             style={{ height: `${layout.timelineHeight}px` }}
@@ -1062,14 +847,12 @@ export default function MPC() {
               pads={initialPads}
               onHover={(element) => handleHover("timeline", element)}
             />
-            {/* Timeline resize handle */}
             <div
               className="h-1 w-full bg-gray-600 hover:bg-gray-500 cursor-ns-resize"
               onMouseDown={() => setIsResizingTimeline(true)}
             />
           </div>
 
-          {/* Pads */}
           <Pads
             pads={initialPads}
             activePads={activePads}
@@ -1079,13 +862,9 @@ export default function MPC() {
             onHover={(element) => handleHover("pads", element)}
           />
         </div>
-      </div>
 
-      {/* Footer */}
-      <Footer
-        hoveredElement={hoveredElement}
-        hoveredSection={hoveredSection}
-      />
+        <Footer hoveredElement={hoveredElement} hoveredSection={hoveredSection} />
+      </div>
     </div>
   );
 }

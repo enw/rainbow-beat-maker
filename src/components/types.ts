@@ -12,7 +12,10 @@ export type PadHit = {
 };
 
 export type Pattern = {
-  hits: PadHit[];
+  hits: {
+    padId: number;
+    timestamp: number;
+  }[];
   duration: number;
   loop?: boolean;
 };
@@ -28,3 +31,5 @@ export type LayoutState = {
   timelineHeight: number;
   padHeight: number;
 };
+
+export type ComponentSection = "header" | "timeline" | "pads" | null;

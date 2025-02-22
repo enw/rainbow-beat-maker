@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Pattern, Pad } from "../types";
+import { Pattern, Pad } from "./types";
 
 type TimelineProps = {
   pattern: Pattern | null;

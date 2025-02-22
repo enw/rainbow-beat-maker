@@ -1,4 +1,5 @@
-import { Pattern } from "../types";
+import React from "react";
+import { Pattern } from "./types";
 
 type HeaderProps = {
   currentPattern: Pattern | null;
@@ -9,6 +10,8 @@ type HeaderProps = {
   onStop: () => void;
   onStopRecording: () => void;
   onClear: () => void;
+  headerColor: string;
+  beatCount: number;
 };
 
 export function Header({
@@ -20,10 +23,25 @@ export function Header({
   onStop,
   onStopRecording,
   onClear,
+  headerColor,
+  beatCount,
 }: HeaderProps) {
   return (
-    <div className="bg-gray-800 p-4 border-b border-gray-700 flex items-center justify-between">
-      <h1 className="text-2xl font-bold text-white">Rainbow Beat Maker</h1>
+    <div
+      className="p-4 border-b border-gray-700 flex items-center justify-between"
+      style={{ backgroundColor: headerColor }}
+    >
+      <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+        Rainbow Beat Maker
+        <span
+          className={`w-4 h-4 rounded-full transition-transform duration-200 ${
+            beatCount % 4 === 0
+              ? "bg-red-500 scale-125"
+              : "bg-blue-500 scale-100"
+          }`}
+        />
+        {beatCount}
+      </h1>
 
       <div className="flex items-center gap-4">
         {!isRecording && !isPlaying && (
