@@ -240,7 +240,7 @@ export default function MPC() {
       <div className="max-w-4xl mx-auto">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white">Elliot & Noelle&apos;s Beat Maker</h1>
+            <h1 className="text-3xl font-bold text-white">Rainbow Beat Maker</h1>
             <p className="text-gray-400 text-sm mt-1">
               Press &apos;K&apos; to {showShortcuts ? "hide" : "show"} keyboard shortcuts
             </p>

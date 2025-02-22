@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rainbow Beat Maker
+
+A web-based drum machine/beat maker built with Next.js and Web Audio API. Features a 4x4 grid of drum pads that can be triggered via mouse clicks or keyboard shortcuts. The rainbow color scheme was inspired by Noelle's design suggestions.
+
+## Features
+
+- 16 drum pads with unique sounds
+- Keyboard shortcuts for quick access (displayed on pads)
+- Visual feedback when pads are triggered
+- Rainbow color scheme for easy pad identification
+- Toggle keyboard shortcut display with 'K' key
+- BPM control (coming soon)
+- Play/Stop functionality (coming soon)
+
+## Keyboard Layout
+
+```
+1 2 3 4
+Q W E R
+A S D F
+Z X C V
+```
 
 ## Getting Started
 
-First, run the development server:
+1. Clone the repository
+2. Install dependencies:
+```bash
+npm install
+# or
+yarn install
+```
 
+3. Add drum samples:
+   Create a `public/samples` directory and add the following `.wav` files:
+   - kick.wav
+   - snare.wav
+   - clap.wav
+   - hihat.wav
+   - tom1.wav
+   - tom2.wav
+   - cymbal.wav
+   - perc.wav
+   - kick2.wav
+   - snare2.wav
+   - clap2.wav
+   - hihat2.wav
+   - tom3.wav
+   - tom4.wav
+   - cymbal2.wav
+   - perc2.wav
+
+   (Note: Sample population script coming soon!)
+
+4. Run the development server:
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Technologies Used
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Next.js 14
+- React
+- TypeScript
+- Tailwind CSS
+- Web Audio API
 
-## Learn More
+## Coming Soon
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Sample population script
+- Recording functionality
+- Pattern sequencer
+- Sound customization
+- Save/load patterns
+- Share beats with others
