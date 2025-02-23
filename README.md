@@ -2,6 +2,9 @@
 
 A web-based drum machine/beat maker built with Next.js and Web Audio API. Features a 4x4 grid of drum pads that can be triggered via mouse clicks or keyboard shortcuts. The rainbow color scheme was inspired by Noelle's design suggestions.
 
+![Rainbow Beat Maker](./BeatMaker.png)
+![RBM Sketches](./BeatMakerSketch.png)
+
 ## Features
 
 - 16 drum pads with unique sounds
@@ -81,3 +84,6 @@ yarn dev
 - Sound customization
 - Save/load patterns
 - Share beats with others
+- Sample libraries
+- Save/load
+- Arrangement view
