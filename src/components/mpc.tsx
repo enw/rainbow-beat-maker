@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { Footer } from "./Footer";
 import { Pads } from "./Pads";
 import { Header } from "./Header";
-import { ConfigPanel } from "./ConfigPanel";
+import { SidePanel } from "./SidePanel";
 import {
   ComponentSection,
   Pattern,
@@ -395,6 +395,11 @@ export default function MPC() {
 
   // Calculate beat duration in ms from BPM
   const beatDuration = useMemo(() => 60000 / bpm, [bpm]);
+
+  // Add new state for song details
+  const [songName, setSongName] = useState("");
+  const [songwriterName, setSongwriterName] = useState("");
+  const [songNotes, setSongNotes] = useState("");
 
   // Initialize audio context and load samples
   useEffect(() => {
@@ -856,7 +861,8 @@ export default function MPC() {
             className="bg-gray-800 flex-shrink-0 border-r border-gray-700"
             style={{ width: `${layout.configWidth}px` }}
           >
-            <ConfigPanel
+            <SidePanel
+              // Config panel props
               bpm={bpm}
               setBpm={setBpm}
               isMetronomeOn={isMetronomeOn}
@@ -873,6 +879,13 @@ export default function MPC() {
               setShowShortcuts={setShowShortcuts}
               flashHeader={flashHeader}
               setFlashHeader={setFlashHeader}
+              // Detail panel props
+              songName={songName}
+              setSongName={setSongName}
+              songwriterName={songwriterName}
+              setSongwriterName={setSongwriterName}
+              songNotes={songNotes}
+              setSongNotes={setSongNotes}
             />
           </div>
 
