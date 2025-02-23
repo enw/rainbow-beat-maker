@@ -1,17 +1,21 @@
 import React from "react";
 import { Pattern } from "./types";
+import { ScrubberControls } from "./ScrubberControls";
 
 type HeaderProps = {
   currentPattern: Pattern | null;
   isPlaying: boolean;
   isRecording: boolean;
   onPlay: () => void;
+  onPlayFromStart: () => void;
   onRecord: () => void;
   onStop: () => void;
   onStopRecording: () => void;
   onClear: () => void;
   headerColor: string;
   beatCount: number;
+  currentBar: number;
+  currentBeat: number;
   className?: string;
 };
 
@@ -20,12 +24,15 @@ export function Header({
   isPlaying,
   isRecording,
   onPlay,
+  onPlayFromStart,
   onRecord,
   onStop,
   onStopRecording,
   onClear,
   headerColor,
   beatCount,
+  currentBar,
+  currentBeat,
   className = "",
 }: HeaderProps) {
   return (
@@ -42,48 +49,22 @@ export function Header({
               : "bg-blue-500 scale-100"
           }`}
         />
-        {beatCount}
       </h1>
 
       <div className="flex items-center gap-4">
-        {!isRecording && !isPlaying && (
-          <>
-            <button
-              onClick={onRecord}
-              className="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white flex items-center gap-2"
-            >
-              <span className="text-xl">⏺</span>
-              {currentPattern ? "Overdub" : "Record"}
-            </button>
-            {currentPattern && (
-              <button
-                onClick={onPlay}
-                className="px-4 py-2 rounded bg-green-500 hover:bg-green-600 text-white flex items-center gap-2"
-              >
-                <span className="text-xl">▶</span>
-                Play
-              </button>
-            )}
-          </>
-        )}
-        {isRecording && (
-          <button
-            onClick={onStopRecording}
-            className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-600 text-white flex items-center gap-2"
-          >
-            <span className="text-xl">⏹</span>
-            Stop Recording
-          </button>
-        )}
-        {isPlaying && !isRecording && (
-          <button
-            onClick={onStop}
-            className="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white flex items-center gap-2"
-          >
-            <span className="text-xl">⏹</span>
-            Stop
-          </button>
-        )}
+        <ScrubberControls
+          currentPattern={currentPattern}
+          isPlaying={isPlaying}
+          isRecording={isRecording}
+          onPlay={onPlay}
+          onPlayFromStart={onPlayFromStart}
+          onRecord={onRecord}
+          onRecordOverdub={onRecord}
+          onStop={isRecording ? onStopRecording : onStop}
+          currentBar={currentBar}
+          currentBeat={currentBeat}
+        />
+
         {currentPattern && !isPlaying && !isRecording && (
           <button
             onClick={onClear}

@@ -377,6 +377,8 @@ export default function MPC() {
   const [headerColor, setHeaderColor] = useState("#1f2937"); // Default header color (gray-800)
   const [flashHeader, setFlashHeader] = useState(true); // New state for flashing header
   const [beatCount, setBeatCount] = useState(0); // New state for beat count
+  const [currentBar, setCurrentBar] = useState(1);
+  const [currentBeat, setCurrentBeat] = useState(1);
 
   // Set all boolean config options to true by default
   const [isMetronomeOn, setIsMetronomeOn] = useState(true);
@@ -801,6 +803,31 @@ export default function MPC() {
     []
   );
 
+  const playFromStart = useCallback(() => {
+    if (!currentPattern) return;
+    setCurrentTime(0);
+    setCurrentBar(1);
+    setCurrentBeat(1);
+    playPattern();
+  }, [currentPattern, playPattern]);
+
+  // Update bar and beat count during playback
+  useEffect(() => {
+    if (isPlaying && currentPattern) {
+      const beatsPerMeasure = 4;
+      const beatDuration = 60000 / bpm;
+      const totalBeats = Math.floor(currentTime / beatDuration);
+      const newBar = Math.floor(totalBeats / beatsPerMeasure) + 1;
+      const newBeat = (totalBeats % beatsPerMeasure) + 1;
+
+      setCurrentBar(newBar);
+      setCurrentBeat(newBeat);
+    } else {
+      setCurrentBar(1);
+      setCurrentBeat(1);
+    }
+  }, [isPlaying, currentPattern, currentTime, bpm]);
+
   return (
     <div className="h-screen flex flex-col">
       {/* Header fixed at top */}
@@ -810,12 +837,15 @@ export default function MPC() {
         isPlaying={isPlaying}
         isRecording={isRecording}
         onPlay={playPattern}
+        onPlayFromStart={playFromStart}
         onRecord={startRecording}
         onStop={stopPattern}
         onStopRecording={stopRecording}
         onClear={clearPattern}
         headerColor={headerColor}
         beatCount={beatCount}
+        currentBar={currentBar}
+        currentBeat={currentBeat}
       />
 
       {/* Main content area */}
