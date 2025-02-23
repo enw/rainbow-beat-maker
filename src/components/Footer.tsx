@@ -5,18 +5,26 @@ type ComponentSection = "pads" | "timeline" | "config" | "header" | null;
 type FooterProps = {
   hoveredElement: string;
   hoveredSection: ComponentSection;
+  className?: string;
 };
 
 const sectionDescriptions: Record<NonNullable<ComponentSection>, string> = {
   pads: "16 velocity-sensitive drum pads with keyboard shortcuts. Click or use keyboard to play sounds.",
-  timeline: "Visual pattern editor showing recorded hits. Drag divider to resize.",
+  timeline:
+    "Visual pattern editor showing recorded hits. Drag divider to resize.",
   config: "Configuration panel for BPM, quantization, and playback settings.",
   header: "Transport controls for recording, playback and pattern management.",
 };
 
-export function Footer({ hoveredElement, hoveredSection }: FooterProps) {
+export function Footer({
+  hoveredElement,
+  hoveredSection,
+  className = "",
+}: FooterProps) {
   return (
-    <div className="bg-gray-800 border-t border-gray-700 p-2 flex items-center justify-between w-full">
+    <div
+      className={`bg-gray-800 border-t border-gray-700 p-2 flex items-center justify-between w-full ${className}`}
+    >
       <div className="text-gray-400 text-sm">
         {hoveredSection ? (
           <>

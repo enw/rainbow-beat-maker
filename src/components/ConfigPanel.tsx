@@ -57,7 +57,7 @@ export function ConfigPanel({
   setFlashHeader,
 }: ConfigPanelProps) {
   return (
-    <div className="fixed left-0 top-0 h-full w-64 bg-gray-800 p-6 z-50">
+    <div className="left-0 top-0 h-full bg-gray-800 p-6 z-50">
       <h2 className="text-white text-xl font-bold mb-6">Configuration</h2>
       <div className="space-y-4 text-white">
         {/* UI Settings */}

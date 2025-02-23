@@ -12,6 +12,7 @@ type HeaderProps = {
   onClear: () => void;
   headerColor: string;
   beatCount: number;
+  className?: string;
 };
 
 export function Header({
@@ -25,10 +26,11 @@ export function Header({
   onClear,
   headerColor,
   beatCount,
+  className = "",
 }: HeaderProps) {
   return (
     <div
-      className="p-4 border-b border-gray-700 flex items-center justify-between"
+      className={`p-4 border-b border-gray-700 flex items-center justify-between bg-opacity-90 backdrop-blur-sm z-10 ${className}`}
       style={{ backgroundColor: headerColor }}
     >
       <h1 className="text-2xl font-bold text-white flex items-center gap-2">

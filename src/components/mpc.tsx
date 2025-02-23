@@ -802,43 +802,61 @@ export default function MPC() {
   );
 
   return (
-    <div className="h-screen flex flex-row overflow-hidden">
-      <ConfigPanel
-        bpm={bpm}
-        setBpm={setBpm}
-        isMetronomeOn={isMetronomeOn}
-        setIsMetronomeOn={setIsMetronomeOn}
-        useCountIn={useCountIn}
-        setUseCountIn={setUseCountIn}
-        isLooping={isLooping}
-        setIsLooping={setIsLooping}
-        measures={measures}
-        setMeasures={setMeasures}
-        quantization={quantization}
-        setQuantization={setQuantization}
-        showShortcuts={showShortcuts}
-        setShowShortcuts={setShowShortcuts}
-        flashHeader={flashHeader}
-        setFlashHeader={setFlashHeader}
+    <div className="h-screen flex flex-col">
+      {/* Header fixed at top */}
+      <Header
+        className="flex-shrink-0"
+        currentPattern={currentPattern}
+        isPlaying={isPlaying}
+        isRecording={isRecording}
+        onPlay={playPattern}
+        onRecord={startRecording}
+        onStop={stopPattern}
+        onStopRecording={stopRecording}
+        onClear={clearPattern}
+        headerColor={headerColor}
+        beatCount={beatCount}
       />
 
-      <div className="flex-grow flex flex-col overflow-hidden">
-        <Header
-          currentPattern={currentPattern}
-          isPlaying={isPlaying}
-          isRecording={isRecording}
-          onPlay={playPattern}
-          onRecord={startRecording}
-          onStop={stopPattern}
-          onStopRecording={stopRecording}
-          onClear={clearPattern}
-          headerColor={headerColor}
-          beatCount={beatCount}
-        />
-
-        <div className="flex-grow flex flex-col h-full overflow-hidden">
+      {/* Main content area */}
+      <div className="flex-grow flex">
+        {/* Config Panel */}
+        <div className="flex flex-row h-full">
           <div
-            className="bg-gray-800 flex-shrink-0"
+            className="bg-gray-800 flex-shrink-0 border-r border-gray-700"
+            style={{ width: `${layout.configWidth}px` }}
+          >
+            <ConfigPanel
+              bpm={bpm}
+              setBpm={setBpm}
+              isMetronomeOn={isMetronomeOn}
+              setIsMetronomeOn={setIsMetronomeOn}
+              useCountIn={useCountIn}
+              setUseCountIn={setUseCountIn}
+              isLooping={isLooping}
+              setIsLooping={setIsLooping}
+              measures={measures}
+              setMeasures={setMeasures}
+              quantization={quantization}
+              setQuantization={setQuantization}
+              showShortcuts={showShortcuts}
+              setShowShortcuts={setShowShortcuts}
+              flashHeader={flashHeader}
+              setFlashHeader={setFlashHeader}
+            />
+          </div>
+
+          {/* Resizer */}
+          <div
+            className="w-1 bg-gray-600 hover:bg-gray-500 cursor-ew-resize"
+            onMouseDown={() => setIsResizingConfig(true)}
+          />
+        </div>
+
+        {/* Timeline and Pads */}
+        <div className="flex-grow bg-gray-800 overflow-hidden flex flex-col">
+          <div
+            className="flex-shrink-0"
             style={{ height: `${layout.timelineHeight}px` }}
           >
             <Timeline
@@ -861,21 +879,25 @@ export default function MPC() {
             />
           </div>
 
-          <Pads
-            pads={initialPads}
-            activePads={activePads}
-            failedSamples={failedSamples}
-            showShortcuts={showShortcuts}
-            onPadPress={handlePadPress}
-            onHover={(element) => handleHover("pads", element)}
-          />
+          <div className="flex-grow">
+            <Pads
+              pads={initialPads}
+              activePads={activePads}
+              failedSamples={failedSamples}
+              showShortcuts={showShortcuts}
+              onPadPress={handlePadPress}
+              onHover={(element) => handleHover("pads", element)}
+            />
+          </div>
         </div>
-
-        <Footer
-          hoveredElement={hoveredElement}
-          hoveredSection={hoveredSection}
-        />
       </div>
+
+      {/* Footer */}
+      <Footer
+        className="flex-shrink-0"
+        hoveredElement={hoveredElement}
+        hoveredSection={hoveredSection}
+      />
     </div>
   );
 }
