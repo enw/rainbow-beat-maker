@@ -1,5 +1,11 @@
 # Rainbow Beat Maker
 
+[![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat&logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-18-blue?style=flat&logo=react)](https://reactjs.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-38B2AC?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A web-based drum machine/beat maker built with Next.js and Web Audio API. Features a 4x4 grid of drum pads that can be triggered via mouse clicks or keyboard shortcuts. The rainbow color scheme was inspired by Noelle's design suggestions.
 
 ![Rainbow Beat Maker](./BeatMaker.png)
